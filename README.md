@@ -11,9 +11,13 @@ It started as "my kid needs a physical timer" and turned into a whole puck. 🙂
 
 ## Demo
 
-<!-- To embed an inline player: edit this file on GitHub (pencil), click on the empty
-     line below, then drag assets/demo.mp4 into the editor. GitHub uploads it and inserts
-     a user-attachments URL that renders as a video player. Then commit. -->
+<!-- Replace YOUR_VIDEO_URL below: edit this file on GitHub (pencil), drag assets/demo.mp4
+     into the editor so GitHub uploads it and shows a https://github.com/user-attachments/assets/...
+     link, then paste that link in place of YOUR_VIDEO_URL. Commit. -->
+
+<div align="center">
+  <video src="YOUR_VIDEO_URL" controls width="400"></video>
+</div>
 
 [Watch the demo video (full quality, with sound)](assets/demo.mp4)
 
