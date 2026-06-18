@@ -171,14 +171,6 @@ esphome:
             then:
               - delay: 2s          # give the game packages' interval watchers time to clear their scores
               - lambda: 'id(g_factory_reset) = false;'
-    - priority: 250
-      then:
-        - delay: 500ms
-        - drv2605.wake:
-            id: haptic_driver
-        - drv2605.play_effect:
-            id: haptic_driver
-            effect: 1
     - priority: -100
       then:
         - script.execute: haptic_boot_splash
@@ -606,10 +598,6 @@ globals:
     type: int
     restore_value: no
     initial_value: '0'
-  - id: g_alarm_flash  # toggled every 500ms while alarm is active (header blink)
-    type: bool
-    restore_value: no
-    initial_value: 'false'
   - id: g_bright       # screen brightness in % (settings)
     type: int
     restore_value: no
@@ -1222,15 +1210,13 @@ script:
             - lambda: |-
                 id(g_mode) = 4;
                 id(g_alarm_cnt) = 0;
-                id(g_alarm_flash) = true;
                 id(g_timer_active) = false;
                 id(g_timer_paused) = false;
                 id(g_timer_secs) = 0;
                 id(g_cur_page) = 1;
             - lvgl.page.show:
-                id: page_mode
+                id: page_alarm
                 animation: NONE
-            - script.execute: alarm_render
             - lambda: 'id(g_ring_cur) = -1;'
             - script.execute: haptic_update
             - script.execute: haptic_bump
@@ -1241,7 +1227,7 @@ script:
                 announcement: true
   - id: alarm_stop
     then:
-      - lambda: 'id(g_mode) = 0; id(g_timer_active) = false; id(g_timer_paused) = false; id(g_timer_secs) = 0; id(g_alarm_flash) = false;'
+      - lambda: 'id(g_mode) = 0; id(g_timer_active) = false; id(g_timer_paused) = false; id(g_timer_secs) = 0;'
       - script.execute: ui_render
       - script.execute: timer_render
   # Knob CCW (anticlockwise) - same routing as the old K718 pulse-left handler.
@@ -1353,75 +1339,48 @@ script:
             - drv2605.stop:
                 id: haptic_driver
       - if:
-          condition: { lambda: 'return id(g_ring_cur) == 1;' }
+          condition: { lambda: 'return id(g_ring_cur) != 0;' }
           then:
-            - drv2605.wake:
-                id: haptic_driver
-            - drv2605.play_sequence:
-                id: haptic_driver
-                effects: [16, 16, 16]
-      - if:
-          condition: { lambda: 'return id(g_ring_cur) == 21;' }
-          then:
-            - drv2605.wake:
-                id: haptic_driver
-            - drv2605.play_effect:
-                id: haptic_driver
-                effect: 7
-      - if:
-          condition: { lambda: 'return id(g_ring_cur) == 22;' }
-          then:
-            - drv2605.wake:
-                id: haptic_driver
-            - drv2605.play_effect:
-                id: haptic_driver
-                effect: 10
-      - if:
-          condition: { lambda: 'return id(g_ring_cur) == 23;' }
-          then:
-            - drv2605.wake:
-                id: haptic_driver
-            - drv2605.play_effect:
-                id: haptic_driver
-                effect: 52
-      - if:
-          condition: { lambda: 'return id(g_ring_cur) == 5;' }
-          then:
-            - drv2605.wake:
-                id: haptic_driver
-            - drv2605.play_effect:
-                id: haptic_driver
-                effect: 7
-      - if:
-          condition: { lambda: 'return id(g_ring_cur) == 3;' }
-          then:
-            - drv2605.wake:
-                id: haptic_driver
-            - drv2605.play_effect:
-                id: haptic_driver
-                effect: 14
+            - script.execute: haptic_bump
   - id: haptic_bump
+    mode: restart
     then:
+      - drv2605.set_realtime_value:
+          id: haptic_driver
+          value: 127
+      - delay: 45ms
+      - drv2605.set_realtime_value:
+          id: haptic_driver
+          value: 0
       - drv2605.wake:
           id: haptic_driver
-      - drv2605.play_effect:
-          id: haptic_driver
-          effect: 7
   - id: haptic_boot_splash
     then:
+      - drv2605.set_realtime_value:
+          id: haptic_driver
+          value: 100
+      - delay: 45ms
+      - drv2605.set_realtime_value:
+          id: haptic_driver
+          value: 0
+      - delay: 75ms
+      - drv2605.set_realtime_value:
+          id: haptic_driver
+          value: 127
+      - delay: 60ms
+      - drv2605.set_realtime_value:
+          id: haptic_driver
+          value: 0
+      - delay: 75ms
+      - drv2605.set_realtime_value:
+          id: haptic_driver
+          value: 127
+      - delay: 90ms
+      - drv2605.set_realtime_value:
+          id: haptic_driver
+          value: 0
       - drv2605.wake:
           id: haptic_driver
-      - drv2605.play_effect:
-          id: haptic_driver
-          effect: 7
-      - delay: 120ms
-      - drv2605.play_effect:
-          id: haptic_driver
-          effect: 10
-      - delay: 120ms
-      - drv2605.play_effect:
-          id: haptic_driver
-          effect: 52
   - id: haptic_vol_flash
     mode: restart
     then:
@@ -1431,32 +1390,6 @@ script:
       - delay: 2000ms
       - lambda: 'id(g_vol_show) = false; id(g_ring_cur) = -1;'
       - script.execute: haptic_update
-  - id: alarm_render
-    then:
-      - lvgl.widget.show: ui_dim
-      - lvgl.widget.show: ui_head_bg
-      - lvgl.widget.show: ui_head
-      - lvgl.widget.show: ui_big
-      - lvgl.widget.hide: ui_sub
-      - lvgl.widget.hide: ui_bar
-      - lvgl.widget.hide: disp_roller
-      - lvgl.widget.hide: disp_lbl
-      - lvgl.widget.hide: disp_switch
-      - lvgl.widget.hide: asys_roller
-      - lvgl.widget.hide: sys_roller
-      - lvgl.widget.hide: ring_roller
-      - lvgl.widget.hide: home_roller
-      - lvgl.widget.hide: wid_roller
-      - lvgl.widget.hide: wopt_roller
-      - lvgl.label.update:
-          id: ui_big
-          text: "0:00"
-      - lvgl.label.update:
-          id: ui_head
-          text: "ALARM"
-      - lvgl.widget.update:
-          id: ui_head_bg
-          bg_color: 0xFF5555
   # --- Timer as a SCREEN (page_timer): render + button controls ---
   - id: timer_render
     then:
@@ -1701,11 +1634,15 @@ button:
     name: "Test Haptic"
     entity_category: diagnostic
     on_press:
+      - drv2605.set_realtime_value:
+          id: haptic_driver
+          value: 127
+      - delay: 250ms
+      - drv2605.set_realtime_value:
+          id: haptic_driver
+          value: 0
       - drv2605.wake:
           id: haptic_driver
-      - drv2605.play_effect:
-          id: haptic_driver
-          effect: 1
 
 touchscreen:
   platform: cst816
@@ -2432,40 +2369,7 @@ interval:
       - if:
           condition: { lambda: 'return id(g_ring_cur) == 21 || id(g_ring_cur) == 3 || id(g_ring_cur) == 1;' }
           then:
-            - drv2605.wake:
-                id: haptic_driver
-            - if:
-                condition: { lambda: 'return id(g_ring_cur) == 21;' }
-                then:
-                  - drv2605.play_effect:
-                      id: haptic_driver
-                      effect: 7
-            - if:
-                condition: { lambda: 'return id(g_ring_cur) == 3;' }
-                then:
-                  - drv2605.play_effect:
-                      id: haptic_driver
-                      effect: 14
-            - if:
-                condition: { lambda: 'return id(g_ring_cur) == 1;' }
-                then:
-                  - drv2605.play_effect:
-                      id: haptic_driver
-                      effect: 16
-  # Alarm header blink (lightweight - no full ui_render).
-  - interval: 500ms
-    then:
-      - if:
-          condition: { lambda: 'return id(g_mode) == 4;' }
-          then:
-            - if:
-                condition: { lambda: 'return id(g_alarm_flash);' }
-                then:
-                  - lvgl.widget.update: { id: ui_head_bg, bg_color: 0xAA2222 }
-                  - lambda: 'id(g_alarm_flash) = false;'
-                else:
-                  - lvgl.widget.update: { id: ui_head_bg, bg_color: 0xFF5555 }
-                  - lambda: 'id(g_alarm_flash) = true;'
+            - script.execute: haptic_bump
   # Boot splash: type out "HELLO!" then cross-fade to the clock (~5 s), once at startup.
   - interval: 150ms
     then:
@@ -3005,6 +2909,46 @@ lvgl:
               - "Volume"
             selected_index: 0
             hidden: true
+    - id: page_alarm
+      bg_color: 0x000000
+      widgets:
+        - obj:
+            x: 0
+            y: 0
+            width: 360
+            height: 360
+            radius: 0
+            border_width: 0
+            bg_color: 0x000000
+            bg_opa: COVER
+        - obj:
+            align: TOP_MID
+            width: 360
+            height: 54
+            radius: 0
+            border_width: 0
+            bg_color: 0xFF5555
+            bg_opa: COVER
+        - label:
+            align: TOP_MID
+            y: 17
+            text: "ALARM"
+            text_font: font_artist
+            text_color: 0x000000
+        - label:
+            align: CENTER
+            y: -14
+            text: "0:00"
+            text_font: montserrat_48
+            text_color: 0xFFFFFF
+        - label:
+            align: CENTER
+            y: 62
+            width: 280
+            text_align: CENTER
+            text: "Tap to stop"
+            text_font: font_med
+            text_color: 0xFF7777
     - id: page_settings
       bg_color: 0x000000
       widgets:

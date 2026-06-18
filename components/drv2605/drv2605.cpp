@@ -17,6 +17,7 @@ void DRV2605Component::setup() {
     this->mark_failed();
     return;
   }
+  ESP_LOGCONFIG(TAG, "Detected device status=0x%02X, chip_id=0x%02X", status, status >> 5);
 
   // Exit standby mode
   if (!this->write_register_(DRV2605_REG_MODE, 0x00)) {
@@ -87,7 +88,19 @@ void DRV2605Component::dump_config() {
   LOG_I2C_DEVICE(this);
   ESP_LOGCONFIG(TAG, "  Motor Type: %s", this->is_lra_ ? "LRA" : "ERM");
   ESP_LOGCONFIG(TAG, "  Library: %d", this->library_);
-  
+
+  uint8_t status = 0, mode = 0, library = 0, feedback = 0, control3 = 0;
+  if (this->read_register_(DRV2605_REG_STATUS, &status) &&
+      this->read_register_(DRV2605_REG_MODE, &mode) &&
+      this->read_register_(DRV2605_REG_LIBRARY, &library) &&
+      this->read_register_(DRV2605_REG_FEEDBACK, &feedback) &&
+      this->read_register_(DRV2605_REG_CONTROL3, &control3)) {
+    ESP_LOGCONFIG(TAG, "  Registers: STATUS=0x%02X MODE=0x%02X LIB=0x%02X FEEDBACK=0x%02X CONTROL3=0x%02X",
+                  status, mode, library, feedback, control3);
+  } else {
+    ESP_LOGE(TAG, "Failed to read diagnostic registers");
+  }
+
   if (this->is_failed()) {
     ESP_LOGE(TAG, "Communication with DRV2605 failed!");
   }
@@ -115,18 +128,16 @@ void DRV2605Component::play_effect(uint8_t effect) {
     return;
   }
 
-  // Ensure internal-trigger library mode before playing a ROM effect.
-  this->set_mode_(DRV2605_MODE_INTTRIG);
-  this->select_library_(this->library_);
+  if (!this->write_register_(DRV2605_REG_GO, 0x00) ||
+      !this->write_register_(DRV2605_REG_MODE, DRV2605_MODE_INTTRIG) ||
+      !this->write_register_(DRV2605_REG_LIBRARY, this->library_) ||
+      !this->write_register_(DRV2605_REG_WAVESEQ1, effect) ||
+      !this->write_register_(DRV2605_REG_WAVESEQ2, 0) ||
+      !this->write_register_(DRV2605_REG_GO, 0x01)) {
+    ESP_LOGE(TAG, "Failed to play effect %d", effect);
+    return;
+  }
 
-  // Set the waveform in sequence register 1
-  this->write_register_(DRV2605_REG_WAVESEQ1, effect);
-  // End the sequence
-  this->write_register_(DRV2605_REG_WAVESEQ2, 0);
-  
-  // Start playback
-  this->write_register_(DRV2605_REG_GO, 0x01);
-  
   ESP_LOGD(TAG, "Playing effect %d", effect);
 }
 
@@ -163,6 +174,9 @@ void DRV2605Component::play_sequence(const std::vector<uint8_t> &effects) {
 }
 
 void DRV2605Component::stop() {
+  // RTP keeps driving until RTPIN is cleared, so stop both playback paths.
+  this->write_register_(DRV2605_REG_RTPIN, 0x00);
+
   // Clear all sequences
   for (uint8_t i = 0; i < 8; i++) {
     this->write_register_(DRV2605_REG_WAVESEQ1 + i, 0);
@@ -175,12 +189,13 @@ void DRV2605Component::stop() {
 }
 
 void DRV2605Component::set_realtime_value(uint8_t value) {
-  // Set to real-time playback mode
-  this->set_mode_(DRV2605_MODE_REALTIME);
-  
-  // Set the RTP value
-  this->write_register_(DRV2605_REG_RTPIN, value);
-  
+  if (!this->write_register_(DRV2605_REG_GO, 0x00) ||
+      !this->write_register_(DRV2605_REG_MODE, DRV2605_MODE_REALTIME) ||
+      !this->write_register_(DRV2605_REG_RTPIN, value)) {
+    ESP_LOGE(TAG, "Failed to set realtime value: %d", value);
+    return;
+  }
+
   ESP_LOGD(TAG, "Set realtime value: %d", value);
 }
 
