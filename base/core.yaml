@@ -170,11 +170,17 @@ esphome:
             then:
               - delay: 2s          # give the game packages' interval watchers time to clear their scores
               - lambda: 'id(g_factory_reset) = false;'
+    - priority: 250
+      then:
+        - delay: 500ms
+        - drv2605.wake:
+            id: haptic_driver
+        - drv2605.play_effect:
+            id: haptic_driver
+            effect: 1
     - priority: -100
       then:
-        - drv2605.play_sequence:
-            id: haptic_driver
-            effects: [7, 10, 52]
+        - script.execute: haptic_boot_splash
         - lambda: |-
             // The device has no IANA tz database, so the clock needs a POSIX TZ string. To keep the
             // `timezone` substitution friendly, map common IANA names -> POSIX here and force the
@@ -867,6 +873,67 @@ script:
       - lvgl.widget.hide: vol_arc
       - lvgl.widget.hide: vol_label
       - lambda: 'id(g_vol_shown) = false;'
+  # Knob volume: sync local speaker + HA player_entity, update the arc immediately.
+  - id: vol_knob_up
+    then:
+      - lambda: |-
+          float v = id(g_vol);
+          if (v <= 0.001f) {
+            if (id(vol_sensor).has_state()) v = (float) id(vol_sensor).state;
+            else v = 0.5f;
+          }
+          v += 0.05f;
+          if (v > 1.0f) v = 1.0f;
+          id(g_vol) = v;
+      - lvgl.arc.update:
+          id: vol_arc
+          value: !lambda 'return id(g_vol) * 100.0f;'
+      - lvgl.label.update:
+          id: vol_label
+          text: !lambda |-
+            char buf[8];
+            snprintf(buf, sizeof(buf), "%d%%", (int) roundf(id(g_vol) * 100.0f));
+            return std::string(buf);
+      - media_player.volume_set:
+          id: media_player_speaker
+          volume: !lambda 'return id(g_vol);'
+      - homeassistant.action:
+          action: media_player.volume_set
+          data:
+            entity_id: "${player_entity}"
+            volume_level: !lambda 'return id(g_vol);'
+      - script.execute: flash_volume
+      - script.execute: haptic_vol_flash
+  - id: vol_knob_down
+    then:
+      - lambda: |-
+          float v = id(g_vol);
+          if (v <= 0.001f) {
+            if (id(vol_sensor).has_state()) v = (float) id(vol_sensor).state;
+            else v = 0.5f;
+          }
+          v -= 0.05f;
+          if (v < 0.0f) v = 0.0f;
+          id(g_vol) = v;
+      - lvgl.arc.update:
+          id: vol_arc
+          value: !lambda 'return id(g_vol) * 100.0f;'
+      - lvgl.label.update:
+          id: vol_label
+          text: !lambda |-
+            char buf[8];
+            snprintf(buf, sizeof(buf), "%d%%", (int) roundf(id(g_vol) * 100.0f));
+            return std::string(buf);
+      - media_player.volume_set:
+          id: media_player_speaker
+          volume: !lambda 'return id(g_vol);'
+      - homeassistant.action:
+          action: media_player.volume_set
+          data:
+            entity_id: "${player_entity}"
+            volume_level: !lambda 'return id(g_vol);'
+      - script.execute: flash_volume
+      - script.execute: haptic_vol_flash
   # Immediately hides the volume overlay (after tapping it) - consumes the click
   - id: vol_hide_now
     then:
@@ -1186,10 +1253,7 @@ script:
                                   else { id(g_night_to)--; if (id(g_night_to) < 0) id(g_night_to) = 23; }
                               - script.execute: ui_render
                             else:
-                              - media_player.volume_down:
-                                  id: media_player_speaker
-                              - script.execute: flash_volume
-                              - script.execute: haptic_vol_flash
+                              - script.execute: vol_knob_down
   - id: knob_cw
     then:
       - if:
@@ -1234,10 +1298,7 @@ script:
                                   else { id(g_night_to)++; if (id(g_night_to) > 23) id(g_night_to) = 0; }
                               - script.execute: ui_render
                             else:
-                              - media_player.volume_up:
-                                  id: media_player_speaker
-                              - script.execute: flash_volume
-                              - script.execute: haptic_vol_flash
+                              - script.execute: vol_knob_up
   # Haptic: priority alarm > assistant > volume > timer > idle.
   - id: haptic_update
     then:
@@ -1291,13 +1352,36 @@ script:
             - drv2605.play_effect:
                 id: haptic_driver
                 effect: 14
+  - id: haptic_bump
+    then:
+      - drv2605.wake:
+          id: haptic_driver
+      - drv2605.play_effect:
+          id: haptic_driver
+          effect: 7
+  - id: haptic_boot_splash
+    then:
+      - drv2605.wake:
+          id: haptic_driver
+      - drv2605.play_effect:
+          id: haptic_driver
+          effect: 7
+      - delay: 120ms
+      - drv2605.play_effect:
+          id: haptic_driver
+          effect: 10
+      - delay: 120ms
+      - drv2605.play_effect:
+          id: haptic_driver
+          effect: 52
   - id: haptic_vol_flash
     mode: restart
     then:
-      - lambda: 'id(g_vol_show) = true;'
+      - lambda: 'id(g_vol_show) = true; id(g_ring_cur) = -1;'
       - script.execute: haptic_update
+      - script.execute: haptic_bump
       - delay: 2000ms
-      - lambda: 'id(g_vol_show) = false;'
+      - lambda: 'id(g_vol_show) = false; id(g_ring_cur) = -1;'
       - script.execute: haptic_update
   # --- Timer as a SCREEN (page_timer): render + button controls ---
   - id: timer_render
@@ -1508,6 +1592,7 @@ i2c:
   sda: 11
   scl: 12
   id: touchscreen_bus
+  scan: true
 
 drv2605:
   id: haptic_driver
@@ -2258,6 +2343,8 @@ interval:
       - if:
           condition: { lambda: 'return id(g_ring_cur) == 21 || id(g_ring_cur) == 3 || id(g_ring_cur) == 1;' }
           then:
+            - drv2605.wake:
+                id: haptic_driver
             - if:
                 condition: { lambda: 'return id(g_ring_cur) == 21;' }
                 then:
