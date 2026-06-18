@@ -1,49 +1,47 @@
 # =============================================================================
-# Voice Knob (JC3636K518C) - YOUR config. This is the only file you keep locally.
+# Voice Knob - YOUR config. This is the only firmware file you keep locally.
 # -----------------------------------------------------------------------------
-# Copy THIS file (+ partitions.csv + secrets.yaml) next to each other, edit the
+# Copy THIS file (+ partitions.csv + a secrets.yaml) next to each other, edit the
 # entities/tiles below to match your Home Assistant, then:
 #
 #   esphome run guition-va.yaml
 #
-# Firmware core + optional screens are pulled from GitHub at compile time
-# (see `packages:` below). To get the latest changes:
+# Everything else (the firmware core + the optional screens) is pulled from GitHub
+# at compile time - see the `packages:` block at the bottom - so you only ever
+# maintain this one file. To get the latest changes:
 #
-#   esphome clean guition-va.yaml
+#   esphome clean guition-va.yaml   # clears the package cache
 #   esphome run   guition-va.yaml
 # =============================================================================
 
 substitutions:
   name: voice-knob
   friendly_name: "Voice Knob"
-  github_user: "ikstema"
-  github_repo: "esphome-guition-jc3636k518c-va"
-  github_ref: main
-  timezone: "Europe/Warsaw"   # IANA name; core maps common zones to POSIX. Zone not listed? paste a POSIX string (github.com/nayarsystems/posix_tz_db). DST automatic.
+  timezone: "Europe/Moscow"   # IANA name; core maps common zones to POSIX. Zone not listed? paste a POSIX string (github.com/nayarsystems/posix_tz_db). DST automatic.
   # For album art: base URL of your HA + the media_player entity
-  ha_base_url: "http://homeassistant.local:8123"
-  player_entity: media_player.voice_knob_player
+  ha_base_url: "http://192.168.1.84:8123"
+  player_entity: media_player.hk_citation_one_55f539
   # On-device wake word. Built-in models: alexa, okay_nabu, hey_jarvis, hey_mycroft.
   wake_word: "alexa"
   # Home screen (weather + room climate). Change to your entities.
-  weather_entity: weather.home
-  room_temp_entity: sensor.room_temperature
-  room_hum_entity: sensor.room_humidity
+  weather_entity: weather.home_assistant
+  room_temp_entity: sensor.gigrometr_v_gostinoi_temperature
+  room_hum_entity: sensor.gigrometr_v_gostinoi_humidity
   # Weather screen forecast: an HA helper sensor (see base/screens/weather.ha-helper.yaml)
   forecast_entity: sensor.va_weekly_forecast
   # Thermostat screen: the climate.* entity it controls
-  climate_entity: climate.living_room
+  climate_entity: climate.termostat_gostinaia
 
   # Control tiles (swipe up): 4 toggles, each entity + icon + name. Works on any HA domain.
   # tileN_icon = a name from the built-in set: bulb lamp led power plug switch fan ac heater
   # thermometer lock unlock door blinds tv speaker bell wifi home flash. Same icon may repeat.
   # (For an icon outside the set: paste its glyph or a "\U000Fxxxx" code from pictogrammers.com.)
-  tile1_entity: light.living_room
+  tile1_entity: light.torshery
   tile1_icon: "bulb"
-  tile1_name: "Light"
-  tile2_entity: switch.desk_neon
-  tile2_icon: "flash"
-  tile2_name: "Neon"
+  tile1_name: "Liv.room"
+  tile2_entity: light.koridor_podsvetka
+  tile2_icon: "bulb"
+  tile2_name: "Korr"
   tile3_entity: light.led_strip
   tile3_icon: "led"
   tile3_name: "LED strip"
@@ -57,10 +55,10 @@ substitutions:
   glance1_entity: sensor.power
   glance1_name: "Power"
   glance1_icon: "flash"
-  glance2_entity: sensor.va_glance_unused2
+  glance2_entity: sensor.gigrometr_v_gostinoi_temperature
   glance2_name: ""
   glance2_icon: ""
-  glance3_entity: sensor.va_glance_unused3
+  glance3_entity: sensor.gigrometr_v_spalne_temperature
   glance3_name: ""
   glance3_icon: ""
   glance4_entity: sensor.va_glance_unused4
@@ -79,20 +77,23 @@ substitutions:
 
 packages:
   core:
-    url: https://github.com/${github_user}/${github_repo}
-    ref: ${github_ref}
+    url: https://github.com/ikstema/esphome-guition-jc3636k518c-va
+    ref: main
+    # Pick your screens here: comment out a base/screens/*.yaml line to drop that screen
+    # from the firmware. Only the clock + controls + settings live in base/core.yaml
+    # (always on); everything below is optional.
     files:
       - base/core.yaml
-      - base/screens/player.yaml
-      - base/screens/timer.yaml
-      - base/screens/cool-cars.yaml
-      - base/screens/space-wars.yaml
-      - base/screens/snake.yaml
-      - base/screens/weather.yaml
-      - base/screens/thermostat.yaml
-      - base/screens/sensors.yaml
-      - base/screens/demo.yaml
-    refresh: 0s
+      - base/screens/player.yaml       # optional: music player (album art + transport)
+      - base/screens/timer.yaml        # optional: timer screen in the carousel (voice timers/alarm stay regardless)
+      - base/screens/cool-cars.yaml    # optional: Cool Cars game
+      - base/screens/space-wars.yaml   # optional: Space Wars game
+      - base/screens/snake.yaml        # optional: Snake game (knob steers)
+      - base/screens/weather.yaml      # optional: weather (today + 7-day, knob scrolls days)
+      - base/screens/thermostat.yaml   # optional: thermostat (climate.* entity; knob sets target, tap on/off)
+      - base/screens/sensors.yaml      # optional: sensors glance (1-6 HA entities, knob cycles)
+#      - base/screens/demo.yaml         # optional: commented example screen (TAP ME!) + Widgets settings
+    refresh: 0s        # always pull the latest beta (set to e.g. 1d once it stabilizes)
 
 # Wi-Fi comes from your local secrets.yaml (the core uses !secret wifi_ssid / wifi_password).
 # Keep a secrets.yaml and partitions.csv next to this file (both must be local paths).
