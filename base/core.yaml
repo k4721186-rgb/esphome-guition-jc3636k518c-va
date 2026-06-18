@@ -174,7 +174,7 @@ esphome:
       then:
         - drv2605.play_sequence:
             id: haptic_driver
-            effects: [7, 0, 10, 0, 52]
+            effects: [7, 10, 52]
         - lambda: |-
             // The device has no IANA tz database, so the clock needs a POSIX TZ string. To keep the
             // `timezone` substitution friendly, map common IANA names -> POSIX here and force the
@@ -1252,7 +1252,7 @@ script:
           then:
             - drv2605.play_sequence:
                 id: haptic_driver
-                effects: [16, 0, 16, 0, 16]
+                effects: [16, 16, 16]
       - if:
           condition: { lambda: 'return id(g_ring_cur) == 21;' }
           then:
