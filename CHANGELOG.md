@@ -15,8 +15,8 @@ All notable changes to this project are documented here. The format is based on
 ### Fixed
 - Clock could still show UTC (off by the timezone offset) after the device had been idle/asleep,
   if a runtime reset to UTC happened to coincide with an empty boot-time timezone snapshot. The
-  per-second timezone self-heal now re-asserts the zone from the time component itself
-  (`get_timezone()`) instead of a one-time boot capture, so a stray UTC reset can never stick.
+  per-second timezone self-heal now re-latches the resolved zone whenever it sees a valid one (not
+  just once at boot) and re-asserts it every tick, so a stray UTC reset can no longer stick.
 
 ## [2.1.3] - 2026-06-17
 
