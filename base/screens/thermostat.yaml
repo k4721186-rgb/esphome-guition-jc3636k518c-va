@@ -1,4 +1,4 @@
-# WLED Preset Selector - Voller Umfang (21 Presets)
+# WLED Preset Selector - Nativer YAML Modus (21 Presets)
 esphome:
   on_boot:
     - priority: 655
@@ -30,7 +30,7 @@ globals:
     type: float
     restore_value: no
     initial_value: '1.0'
-  - id: g_th_max        # Erhöht auf 21 Presets
+  - id: g_th_max        
     type: float
     restore_value: no
     initial_value: '21.0'
@@ -48,50 +48,41 @@ globals:
     initial_value: '0'
 
 script:
-  # Sendet das ausgewählte Preset nach 300ms an Home Assistant
+  # Sendet das ausgewählte Preset nach 300ms nativ an Home Assistant
   - id: th_commit
     mode: restart
     then:
       - delay: 300ms
-      - lambda: |-
-          int idx = (int)id(g_th_target);
-          std::string state_name = "";
-          
-          // Screenshot 1
-          if (idx == 1)  state_name = "Ambiente 1";
-          if (idx == 2)  state_name = "Ambiente 2";
-          if (idx == 3)  state_name = "Fun 1";
-          if (idx == 4)  state_name = "Fun 2";
-          if (idx == 5)  state_name = "Fun 3";
-          if (idx == 6)  state_name = "Fun 4";
-          if (idx == 7)  state_name = "Fun 5";
-          if (idx == 8)  state_name = "Meteor Ambiente";
-          if (idx == 9)  state_name = "Music 1";
-          if (idx == 10) state_name = "Music 2";
-          if (idx == 11) state_name = "Music 3";
-          
-          // Screenshot 2 (Neu hinzugefügt)
-          if (idx == 12) state_name = "Music 4";
-          if (idx == 13) state_name = "Music 5";
-          if (idx == 14) state_name = "Music 6";
-          if (idx == 15) state_name = "Music 7";
-          if (idx == 16) state_name = "Music 8";
-          if (idx == 17) state_name = "Pixelwave Ambiente";
-          if (idx == 18) state_name = "Rain";
-          if (idx == 19) state_name = "Washing Machine Ambiente";
-          if (idx == 20) state_name = "Waterfall Ambiente";
-          if (idx == 21) state_name = "Waterfall up and down";
-          
-          if (!state_name.empty()) {
-            auto args = homeassistant::HomeAssistantServiceCallActionArgs();
-            args.service = "select.select_option";
-            args.data.insert({"entity_id", "select.wled_lamelle_voreinstellung"});
-            args.data.insert({"option", state_name});
-            id(homeassistant_api).call_service(args);
-          }
+      - homeassistant.service:
+          service: select.select_option
+          data:
+            entity_id: select.wled_lamelle_voreinstellung
+            option: !lambda |-
+              int idx = (int)id(g_th_target);
+              if (idx == 1)  return std::string("Ambiente 1");
+              if (idx == 2)  return std::string("Ambiente 2");
+              if (idx == 3)  return std::string("Fun 1");
+              if (idx == 4)  return std::string("Fun 2");
+              if (idx == 5)  return std::string("Fun 3");
+              if (idx == 6)  return std::string("Fun 4");
+              if (idx == 7)  return std::string("Fun 5");
+              if (idx == 8)  return std::string("Meteor Ambiente");
+              if (idx == 9)  return std::string("Music 1");
+              if (idx == 10) return std::string("Music 2");
+              if (idx == 11) return std::string("Music 3");
+              if (idx == 12) return std::string("Music 4");
+              if (idx == 13) return std::string("Music 5");
+              if (idx == 14) return std::string("Music 6");
+              if (idx == 15) return std::string("Music 7");
+              if (idx == 16) return std::string("Music 8");
+              if (idx == 17) return std::string("Pixelwave Ambiente");
+              if (idx == 18) return std::string("Rain");
+              if (idx == 19) return std::string("Washing Machine Ambiente");
+              if (idx == 20) return std::string("Waterfall Ambiente");
+              if (idx == 21) return std::string("Waterfall up and down");
+              return std::string("");
       - lambda: 'id(g_th_pending) = false;'
 
-  # Zeichnet die Oberfläche neu und sorgt für saubere Text-Kürzungen
   - id: th_render
     then:
       - lvgl.label.update:
@@ -120,12 +111,9 @@ script:
             if (idx == 20) return std::string("Waterf.");
             if (idx == 21) return std::string("Wat. U/D");
             return std::string("--");
-      - lvgl.label.update:
-          id: th_cur
-          text: "Wählen..."
+      - lvgl.label.update: { id: th_cur, text: "Wählen..." }
       - lvgl.arc.update:
           id: th_arc
-          # Berechnet den Kreisbogen dynamisch passend für 21 Schritte
           value: !lambda 'return (int)(100L * (id(g_th_target) - 1) / 20);'
       - lvgl.label.update: { id: th_action, text: "EFFEKTE", text_color: 0x2FE6CF }
       - lvgl.label.update: { id: th_mode, text: "Lamellen", text_color: 0x9FC7BE }
@@ -134,7 +122,6 @@ sensor: []
 text_sensor: []
 
 interval:
-  # Karussell-Wechsel
   - interval: 50ms
     then:
       - if:
@@ -147,7 +134,6 @@ interval:
             - if: { condition: { lambda: 'return id(g_nav_anim)==3;' }, then: [lvgl.page.show: { id: page_thermostat, animation: move_bottom, time: 250ms }] }
             - script.execute: th_render
             
-  # Knob-Auswertung pro Klick
   - interval: 120ms
     then:
       - if:
@@ -162,13 +148,12 @@ interval:
             - script.execute: th_commit
             - script.execute: th_render
             
-      # Tap schaltet WLED Lamellen komplett ein/aus
       - if:
           condition: { lambda: 'return id(g_base)==7 && id(g_tap_seq) != id(g_th_lasttap);' }
           then:
             - lambda: 'id(g_th_lasttap) = id(g_tap_seq);'
-            - homeassistant.action:
-                action: light.toggle
+            - homeassistant.service:
+                service: light.toggle
                 data:
                   entity_id: light.wled_lamelle_haupt
 
