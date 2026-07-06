@@ -457,22 +457,24 @@ voice_assistant:
         id(g_timer_secs) = (int) timer.seconds_left;
         if (timer.is_active) { id(g_timer_active) = true; id(g_timer_paused) = false; }
     - script.execute: timer_render
-          # --- HIER IST DIE ANPASSUNG FÜR DEN WOHNZIMMER ALARM ---
+    # --- HIER IST DIE ANPASSUNG FÜR DEN WOHNZIMMER ALARM ---
   on_timer_finished:
     - script.execute: alarm_start  # Zeigt das blinkende Alarm-Overlay im Display
-    # Setzt die Lautstärke des Music Frame auf 20% (0.2 als reine Zahl ohne Anführungszeichen)
-    - homeassistant.service:
-        service: media_player.volume_set
-        data:
-          entity_id: media_player.music_frame_wohnzimmer
-          volume_level: 0.2
-    # Startet das Abspielen des Alarmsounds
-    - homeassistant.service:
-        service: media_player.play_media
-        data:
-          entity_id: media_player.music_frame_wohnzimmer
-          media_content_id: "media-source://media_source/local/timer_alarm.mp3"
-          media_content_type: "audio/mp3"
+    - lambda: |-
+        // 1. Lautstärke auf 20% setzen
+        auto args_vol = homeassistant::HomeAssistantServiceCallActionArgs();
+        args_vol.service = "media_player.volume_set";
+        args_vol.data.insert({"entity_id", "media_player.music_frame_wohnzimmer"});
+        args_vol.data.insert({"volume_level", "0.2"}); // C++ reicht das sauber als String/Float weiter
+        id(homeassistant_api).call_service(args_vol);
+
+        // 2. Medien abspielen
+        auto args_play = homeassistant::HomeAssistantServiceCallActionArgs();
+        args_play.service = "media_player.play_media";
+        args_play.data.insert({"entity_id", "media_player.music_frame_wohnzimmer"});
+        args_play.data.insert({"media_content_id", "media-source://media_source/local/timer_alarm.mp3"});
+        args_play.data.insert({"media_content_type", "audio/mp3"});
+        id(homeassistant_api).call_service(args_play);
 
   on_timer_cancelled:
     - lambda: 'id(g_timer_active) = false; id(g_timer_paused) = false; id(g_timer_secs) = 0;'
