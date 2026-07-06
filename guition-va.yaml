@@ -70,11 +70,11 @@ substitutions:
 
   # Carousel order, left to right. Reorder/remove names freely; screens you did not
   # include in "files:" below are skipped automatically.
-  screen_order: "clock,player,timer,cars,space,snake,weather,sensors,demo"
+  screen_order: "clock,player,timer,thermostat,weather, Sensors,cars,space,snake,demo"
 
 packages:
   core:
-    url: https://github.com/ikstema/esphome-guition-jc3636k518c-va
+    url: https://github.com/k4721186-rgb/esphome-guition-jc3636k518c-va
     ref: main
     # Pick your screens here: comment out a base/screens/*.yaml line to drop that screen
     # from the firmware. Only the clock + controls + settings live in base/core.yaml
@@ -89,5 +89,5 @@ packages:
       - base/screens/weather.yaml      # optional: weather (today + 7-day, knob scrolls days)
       - base/screens/thermostat.yaml   # optional: thermostat (climate.* entity; knob sets target, tap on/off)
       - base/screens/sensors.yaml      # optional: sensors glance (1-6 HA entities, knob cycles)
-#      - base/screens/demo.yaml         # optional: commented example screen (TAP ME!) + Widgets settings
+      - base/screens/demo.yaml         # optional: commented example screen (TAP ME!) + Widgets settings
     refresh: 0s        # always pull the latest beta (set to e.g. 1d once it stabilizes) to this file (both must be local paths).
