@@ -15,65 +15,62 @@
 # =============================================================================
 
 substitutions:
-  name: voice-knob
-  friendly_name: "Voice Knob"
-  timezone: "Europe/Moscow"   # IANA name; core maps common zones to POSIX. Zone not listed? paste a POSIX string (github.com/nayarsystems/posix_tz_db). DST automatic.
+  name: guiton-smartknob
+  friendly_name: "Guiton Smartknob"
+  timezone: "Europe/Warsaw"   # IANA name; core maps common zones to POSIX. Zone not listed? paste a POSIX string (github.com/nayarsystems/posix_tz_db). DST automatic.
   # For album art: base URL of your HA + the media_player entity
-  ha_base_url: "http://192.168.1.84:8123"
-  player_entity: media_player.hk_citation_one_55f539
+  ha_base_url: "http://homeassistant.local:8123"
+  player_entity: media_player.denon_avr_x1800h_4
   # On-device wake word. Built-in models: alexa, okay_nabu, hey_jarvis, hey_mycroft.
-  wake_word: "alexa"
+  wake_word: "hey_jarvis"
   # Home screen (weather + room climate). Change to your entities.
-  weather_entity: weather.home_assistant
-  room_temp_entity: sensor.gigrometr_v_gostinoi_temperature
-  room_hum_entity: sensor.gigrometr_v_gostinoi_humidity
+  weather_entity: weather.openweathermap
+  room_temp_entity: sensor.temperatur_wohnzimmer_temperature
+  room_hum_entity: sensor.temperatur_wohnzimmer_humidity
   # Weather screen forecast: an HA helper sensor (see base/screens/weather.ha-helper.yaml)
   forecast_entity: sensor.va_weekly_forecast
-  # Thermostat screen: the climate.* entity it controls
-  climate_entity: climate.termostat_gostinaia
-
   # Control tiles (swipe up): 4 toggles, each entity + icon + name. Works on any HA domain.
   # tileN_icon = a name from the built-in set: bulb lamp led power plug switch fan ac heater
   # thermometer lock unlock door blinds tv speaker bell wifi home flash. Same icon may repeat.
   # (For an icon outside the set: paste its glyph or a "\U000Fxxxx" code from pictogrammers.com.)
-  tile1_entity: light.torshery
+  tile1_entity: light.decke_wohnzimmer_4
   tile1_icon: "bulb"
-  tile1_name: "Liv.room"
-  tile2_entity: light.koridor_podsvetka
+  tile1_name: "Decke Wohnzimmer"
+  tile2_entity: light.wandfluter
   tile2_icon: "bulb"
-  tile2_name: "Korr"
-  tile3_entity: light.led_strip
+  tile2_name: "Wandfluter"
+  tile3_entity: light.wled_lamelle_haupt
   tile3_icon: "led"
-  tile3_name: "LED strip"
-  tile4_entity: switch.power_socket
-  tile4_icon: "power"
-  tile4_name: "Socket"
+  tile3_name: "LED Lamellen"
+  tile4_entity: switch.bucherregal
+  tile4_icon: "bulb"
+  tile4_name: "Bücherregal"
 
   # Sensors screen (knob cycles): up to 6 read-only HA entities, shown one at a time, big.
   # Set as many glanceN as you want; leave the rest at their default (a non-existent entity)
   # and they're skipped. Icon name is optional (same set as the tiles); empty = no icon.
-  glance1_entity: sensor.power
-  glance1_name: "Power"
-  glance1_icon: "flash"
-  glance2_entity: sensor.gigrometr_v_gostinoi_temperature
-  glance2_name: ""
-  glance2_icon: ""
-  glance3_entity: sensor.gigrometr_v_spalne_temperature
-  glance3_name: ""
-  glance3_icon: ""
-  glance4_entity: sensor.va_glance_unused4
-  glance4_name: ""
-  glance4_icon: ""
-  glance5_entity: sensor.va_glance_unused5
-  glance5_name: ""
-  glance5_icon: ""
-  glance6_entity: sensor.va_glance_unused6
-  glance6_name: ""
-  glance6_icon: ""
+  glance1_entity: binary_sensor.bettsensor_bettsensor
+  glance1_name: "Bettsensor"
+  glance1_icon: "bed"
+  glance2_entity: sensor.bermuda_5b478a1bf30a46479cd92d06e7fdf92c_100_40004_area
+  glance2_name: "Kevin"
+  glance2_icon: "person"
+  glance3_entity: sensor.bermuda_6a4d5e44daed43d5b2b1dbb568087f5f_100_40004_area
+  glance3_name: "Dominika"
+  glance3_icon: "person"
+  glance4_entity: sensor.heizung_schlafzimmer_power
+  glance4_name: "Heizung Schlafzimmer"
+  glance4_icon: "flash"
+  glance5_entity: sensor.heizung_flur_power
+  glance5_name: "Heizung Flur"
+  glance5_icon: "flash"
+  glance6_entity: sensor.heizung_kleines_zimmer_power
+  glance6_name: "Heizung kleines Zimmer"
+  glance6_icon: "flash"
 
   # Carousel order, left to right. Reorder/remove names freely; screens you did not
   # include in "files:" below are skipped automatically.
-  screen_order: "clock,player,timer,cars,space,snake,weather,thermostat,sensors,demo"
+  screen_order: "clock,player,timer,cars,space,snake,weather,sensors,demo"
 
 packages:
   core:
@@ -90,10 +87,7 @@ packages:
       - base/screens/space-wars.yaml   # optional: Space Wars game
       - base/screens/snake.yaml        # optional: Snake game (knob steers)
       - base/screens/weather.yaml      # optional: weather (today + 7-day, knob scrolls days)
-      - base/screens/thermostat.yaml   # optional: thermostat (climate.* entity; knob sets target, tap on/off)
+     # - base/screens/thermostat.yaml   # optional: thermostat (climate.* entity; knob sets target, tap on/off)
       - base/screens/sensors.yaml      # optional: sensors glance (1-6 HA entities, knob cycles)
 #      - base/screens/demo.yaml         # optional: commented example screen (TAP ME!) + Widgets settings
-    refresh: 0s        # always pull the latest beta (set to e.g. 1d once it stabilizes)
-
-# Wi-Fi comes from your local secrets.yaml (the core uses !secret wifi_ssid / wifi_password).
-# Keep a secrets.yaml and partitions.csv next to this file (both must be local paths).
+    refresh: 0s        # always pull the latest beta (set to e.g. 1d once it stabilizes) to this file (both must be local paths).
