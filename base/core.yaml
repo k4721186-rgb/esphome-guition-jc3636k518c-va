@@ -457,8 +457,16 @@ voice_assistant:
         id(g_timer_secs) = (int) timer.seconds_left;
         if (timer.is_active) { id(g_timer_active) = true; id(g_timer_paused) = false; }
     - script.execute: timer_render
-  on_timer_finished:
-    - script.execute: alarm_start
+    on_timer_finished:
+    - script.execute: alarm_start # Behält den visuellen Alarm auf dem Display bei
+    - homeassistant.action:
+        action: media_player.play_media
+        target:
+          entity_id: media_player.music_frame_wohnzimmer
+        data:
+          media_content_id: "media-source://media_source/local/timer_alarm.mp3"
+          media_content_type: "audio/mp3"
+
   on_timer_cancelled:
     - lambda: 'id(g_timer_active) = false; id(g_timer_paused) = false; id(g_timer_secs) = 0;'
     - script.execute: timer_render
