@@ -456,24 +456,21 @@ voice_assistant:
     - lambda: |-
         id(g_timer_secs) = (int) timer.seconds_left;
         if (timer.is_active) { id(g_timer_active) = true; id(g_timer_paused) = false; }
-    - script.execute: timer_render
-    
+    - script.execute: timer_render    
           # --- HIER IST DIE ANPASSUNG FÜR DEN WOHNZIMMER ALARM ---
   on_timer_finished:
     - script.execute: alarm_start  # Zeigt das blinkende Alarm-Overlay im Display
-    # Setzt die Lautstärke des Music Frame auf 20%
+    # Setzt die Lautstärke des Music Frame auf 20% (Als String formatiert)
     - homeassistant.service:
         service: media_player.volume_set
-        target:
-          entity_id: media_player.music_frame_wohnzimmer
         data:
-          volume_level: 0.2
+          entity_id: media_player.music_frame_wohnzimmer
+          volume_level: "0.2"
     # Startet das Abspielen des Alarmsounds
     - homeassistant.service:
         service: media_player.play_media
-        target:
-          entity_id: media_player.music_frame_wohnzimmer
         data:
+          entity_id: media_player.music_frame_wohnzimmer
           media_content_id: "media-source://media_source/local/timer_alarm.mp3"
           media_content_type: "audio/mp3"
 
