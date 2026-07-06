@@ -15,8 +15,8 @@
 # =============================================================================
 
 substitutions:
-  name: guiton-smartknob
-  friendly_name: "Guiton Smartknob"
+  name: guiton-rotary
+  friendly_name: "Guiton Rotary"
   timezone: "Europe/Warsaw"   # IANA name; core maps common zones to POSIX. Zone not listed? paste a POSIX string (github.com/nayarsystems/posix_tz_db). DST automatic.
   # For album art: base URL of your HA + the media_player entity
   ha_base_url: "http://homeassistant.local:8123"
