@@ -457,8 +457,16 @@ voice_assistant:
         id(g_timer_secs) = (int) timer.seconds_left;
         if (timer.is_active) { id(g_timer_active) = true; id(g_timer_paused) = false; }
     - script.execute: timer_render
-    on_timer_finished:
-    - script.execute: alarm_start # Behält den visuellen Alarm auf dem Display bei
+      on_timer_finished:
+    - script.execute: alarm_start  # Behält den visuellen Alarm auf dem Display bei
+    # Setzt die Lautstärke des Music Frame auf 20% (0.2)
+    - homeassistant.action:
+        action: media_player.volume_set
+        target:
+          entity_id: media_player.music_frame_wohnzimmer
+        data:
+          volume_level: 0.2
+    # Startet das Abspielen des Alarmsounds
     - homeassistant.action:
         action: media_player.play_media
         target:
