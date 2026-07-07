@@ -1,4 +1,4 @@
-# Playlist-Auswahl-Screen mit LVGL Roller Widget (Nativ & Fehlerfrei)
+# Playlist-Auswahl-Screen mit LVGL Roller Widget (Nativ & Fehlerfrei für LVGL 9)
 esphome:
   on_boot:
     - priority: 645
@@ -52,9 +52,10 @@ script:
   - id: pl_render
     then:
       - lambda: |-
-          auto* roller_obj = (lv_obj_t*) id(my_playlist_roller).get_obj();
+          // Komplett nativer ESPHome-Weg anstelle von fehleranfälligen C++ Casts
+          auto roller = id(my_playlist_roller);
           int idx = id(g_pl_index);
-          lv_roller_set_selected(roller_obj, idx, LV_ANIM_ON);
+          lv_roller_set_selected(roller.obj, idx, LV_ANIM_ON);
 
 interval:
   # Navigation & Seitenwechsel
@@ -101,8 +102,7 @@ lvgl:
             id: my_playlist_roller
             align: CENTER
             width: 220
-            # Zeigt standardmäßig 3 Zeilen gleichzeitig an (die aktive in der Mitte, groß)
-            visible_row_count: 3 
+            visible_lines: 3 
             options:
               - "Top Hits 2021"
               - "Top Hits 2022"
