@@ -31,14 +31,16 @@ script:
           service: light.turn_on
           data:
             entity_id: light.wohnung_bunt
-            # KORREKTUR: Korrektes, numerisches HS-Format für HA (ohne String-Formatierung)
-            hs_color: 
-              - !lambda "return id(g_cw_hue);"
-              - 100
+            # KORREKTUR: Wir bauen ein valides JSON-Array als String zusammen
+            hs_color: !lambda |-
+              char buf[32];
+              sprintf(buf, "[%d, 100]", id(g_cw_hue));
+              return std::string(buf);
             brightness_pct: !lambda |-
               return std::to_string(id(g_cw_brightness));
             color_temp_kelvin: !lambda |-
               return std::to_string(id(g_cw_temp));
+
 
 interval:
   - interval: 50ms
