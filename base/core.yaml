@@ -81,7 +81,7 @@ esphome:
     - priority: 800
       then:
         - lambda: |-
-                        id(g_order_n) = 0;
+            id(g_order_n) = 0;
             id(g_set_n) = 0;
             id(g_set_labels) = "";
             for (int i = 0; i < 24; i++) id(g_present)[i] = false;
