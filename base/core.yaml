@@ -84,8 +84,11 @@ esphome:
             id(g_order_n) = 0;
             id(g_set_n) = 0;
             id(g_set_labels) = "";
-            for (int i = 0; i < 16; i++) id(g_present)[i] = false;
+            for (int i = 0; i < 20; i++) id(g_present)[i] = false;
             id(g_present)[0] = true;   // clock is always present
+id(g_present)[14] = true;
+id(g_present)[18] = true;
+
             id(g_wgrp_n) = 0; id(g_wgrp_labels) = ""; id(g_wgrp_idx) = 0;
             id(g_wopt_n) = 0; id(g_wcur_n) = 0; id(g_wopt_idx) = 0;
     - priority: 790
@@ -159,10 +162,10 @@ esphome:
               else if (tok == "sensors") id = 8;
               else if (tok == "snake") id = 9;
               // NEU: Trage hier das Farbrad und die Playlists ein
-              else if (tok == "colorwheel") id = 10;
-              else if (tok == "playlists") id = 11;
+              else if (tok == "colorwheel") id = 14;
+              else if (tok == "playlists") id = 18;
               
-              if (id >= 0 && id < 16 && id(g_present)[id]) id(g_order)[id(g_order_n)++] = id;
+              if (id >= 0 && id < 20 && id(g_present)[id]) id(g_order)[id(g_order_n)++] = id;
               if (comma == std::string::npos) break;
               pos = comma + 1;
             }
