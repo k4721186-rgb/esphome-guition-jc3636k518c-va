@@ -84,7 +84,7 @@ esphome:
             id(g_order_n) = 0;
             id(g_set_n) = 0;
             id(g_set_labels) = "";
-            for (int i = 0; i < 20; i++) id(g_present)[i] = false;
+            for (int i = 0; i < 24; i++) id(g_present)[i] = false;
             id(g_present)[0] = true;   // clock is always present
 id(g_present)[14] = true;
 id(g_present)[18] = true;
@@ -165,7 +165,7 @@ id(g_present)[18] = true;
               else if (tok == "colorwheel") id = 14;
               else if (tok == "playlists") id = 18;
               
-              if (id >= 0 && id < 20 && id(g_present)[id]) id(g_order)[id(g_order_n)++] = id;
+              if (id >= 0 && id < 24 && id(g_present)[id]) id(g_order)[id(g_order_n)++] = id;
               if (comma == std::string::npos) break;
               pos = comma + 1;
             }
