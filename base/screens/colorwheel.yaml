@@ -47,7 +47,7 @@ interval:
   - interval: 50ms
     then:
       - if:
-          condition: { lambda: 'return id(g_nav_req) && id(g_base)==10;' }
+          condition: { lambda: 'return id(g_nav_req) && id(g_base)==14;' }
           then:
             - lambda: |-
                 id(g_nav_req) = false; 
