@@ -2466,100 +2466,69 @@ interval:
                       id: media_player_speaker
                       media_file: alarm_sound
                       announcement: true
-  # Seitenwechsel-Erkennung für das Farbrad (ID 10)
+   # Seitenwechsel-Erkennung für das Farbrad (ID 3)
   - interval: 50ms
     then: 
       - if: 
-          condition:
-            lambda: !lambda |-
-              return id(g_nav_req) && id(g_base)==10;
+          condition: { lambda: 'return id(g_nav_req) && id(g_base)==3;' }
           then: 
-            - lambda: !lambda |-
-                id(g_nav_req) = false;
-                id(g_knob_capture) = true;
-                id(g_cw_lasttap) = id(g_tap_seq);
-            - lvgl.page.show:
-                id: page_colorwheel
-                animation: LV_SCREEN_LOAD_ANIM_MOVE_LEFT
-                time: 250ms
-            - script.execute: 
-                id: cw_render
+            - lambda: |-
+                id(g_nav_req) = false; id(g_knob_capture) = true; id(g_cw_lasttap) = id(g_tap_seq);
+            - lvgl.page.show: { id: page_colorwheel, animation: move_left, time: 250ms }
+            - script.execute: cw_render
     startup_delay: 0s
 
   # Knob-Drehung & Drücken für das Farbrad (ID 3)
   - interval: 80ms
     then: 
       - if: 
-          condition:
-            lambda: !lambda |-
-              return id(g_base)==3 && id(g_knob_delta) != 0;
+          condition: { lambda: 'return id(g_base)==3 && id(g_knob_delta) != 0;' }
           then: 
-            - lambda: !lambda |-
+            - lambda: |-
                 int16_t new_hue = (int16_t)id(g_cw_hue) + (id(g_knob_delta) * 4);
                 id(g_knob_delta) = 0;
                 if (new_hue >= 360) new_hue -= 360;
                 if (new_hue < 0) new_hue += 360;
                 id(g_cw_hue) = (uint16_t)new_hue;
-            - script.execute: 
-                id: cw_render
-            - script.execute:
-                id: cw_commit
+            - script.execute: cw_render
+            - script.execute: cw_commit
       - if:
-          condition:
-            lambda: !lambda |-
-              return id(g_base)==3 && id(g_tap_seq) != id(g_cw_lasttap);
+          condition: { lambda: 'return id(g_base)==3 && id(g_tap_seq) != id(g_cw_lasttap);' }
           then:
-            - lambda: !lambda |-
-                id(g_cw_lasttap) = id(g_tap_seq);
-            - homeassistant.service:
-                service: light.toggle
-                data:
-                  entity_id: light.wohnung_bunt
+            - lambda: 'id(g_cw_lasttap) = id(g_tap_seq);'
+            - homeassistant.service: { service: light.toggle, data: { entity_id: light.wohnung_bunt } }
     startup_delay: 0s
 
-  # Seitenwechsel-Erkennung für die Playlists (ID 11)
+  # Seitenwechsel-Erkennung für die Playlists (ID 4)
   - interval: 50ms
     then:
       - if:
-          condition:
-            lambda: !lambda |-
-              return id(g_nav_req) && id(g_base)==11;
+          condition: { lambda: 'return id(g_nav_req) && id(g_base)==4;' }
           then:
-            - lambda: !lambda |-
+            - lambda: |-
                 id(g_nav_req) = false; id(g_knob_capture) = true; id(g_pl_lasttap) = id(g_tap_seq);
-            - lvgl.page.show:
-                id: page_playlists
-                animation: LV_SCREEN_LOAD_ANIM_MOVE_LEFT
-                time: 250ms
-            - script.execute:
-                id: pl_render
+            - lvgl.page.show: { id: page_playlists, animation: move_left, time: 250ms }
+            - script.execute: pl_render
     startup_delay: 0s
 
   # Knob-Drehung & Drücken für die Playlists (ID 4)
   - interval: 120ms
     then:
       - if:
-          condition:
-            lambda: !lambda |-
-              return id(g_base)==4 && id(g_knob_delta) != 0;
+          condition: { lambda: 'return id(g_base)==4 && id(g_knob_delta) != 0;' }
           then:
-            - lambda: !lambda |-
+            - lambda: |-
                 int next_idx = id(g_pl_index) + id(g_knob_delta);
                 id(g_knob_delta) = 0;
                 if (next_idx < 0) next_idx = 0;
                 if (next_idx > id(g_pl_max)) next_idx = id(g_pl_max);
                 id(g_pl_index) = next_idx;
-            - script.execute:
-                id: pl_render
+            - script.execute: pl_render
       - if:
-          condition:
-            lambda: !lambda |-
-              return id(g_base)==4 && id(g_tap_seq) != id(g_pl_lasttap);
+          condition: { lambda: 'return id(g_base)==4 && id(g_tap_seq) != id(g_pl_lasttap);' }
           then:
-            - lambda: !lambda |-
-                id(g_pl_lasttap) = id(g_tap_seq);
-            - script.execute:
-                id: pl_commit
+            - lambda: 'id(g_pl_lasttap) = id(g_tap_seq);'
+            - script.execute: pl_commit
     startup_delay: 0s
 
 lvgl:
