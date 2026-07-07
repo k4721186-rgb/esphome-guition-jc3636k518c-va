@@ -1,4 +1,4 @@
-# Playlist-Auswahl-Screen mit LVGL List Widget (Nativ - Variante B)
+# Playlist-Auswahl-Screen mit LVGL List Widget (Nativ für Denon AVR)
 esphome:
   on_boot:
     # Registriert die Seite im Karussell (z.B. ID 11, passe die ID ggf. an deine g_present-Logik an)
@@ -21,13 +21,22 @@ globals:
     initial_value: '0'
 
 script:
-  # --- VARIANTE B: STARTET DIE PLAYLIST ÜBER DEN NAMEN IN MUSIC ASSISTANT ---
+  # --- MUSIC ASSISTANT PLAYLIST WIEDERGABE AUF DEM DENON ---
   - id: pl_commit
     then:
+      # Schaltet den Denon Receiver ein, falls er im Standby-Modus ist
+      - homeassistant.service:
+          service: media_player.turn_on
+          data:
+            entity_id: media_player.denon_avr_x1800h_4
+            
+      - delay: 500ms # Kurze Pause, damit der Receiver hochfahren und reagieren kann
+      
+      # Startet die ausgewählte Playlist via Music Assistant auf dem Denon
       - homeassistant.service:
           service: music_assistant.play_media
           data:
-            entity_id: media_player.music_frame_wohnzimmer
+            entity_id: media_player.denon_avr_x1800h_4
             media_type: "playlist"
             media_id: !lambda |-
               int idx = id(g_pl_index);
@@ -61,7 +70,7 @@ interval:
   - interval: 50ms
     then:
       - if:
-          condition: { lambda: 'return id(g_nav_req) && id(g_base)==11;' } # Passe g_base an dein screen_order an
+          condition: { lambda: 'return id(g_nav_req) && id(g_base)==11;' } # Entspricht der Position in screen_order
           then:
             - lambda: 'id(g_nav_req) = false; id(g_knob_capture) = true; id(g_pl_lasttap) = id(g_tap_seq);'
             - lvgl.page.show: { id: page_playlists, animation: move_left, time: 250ms }
@@ -84,7 +93,7 @@ interval:
                 id(g_pl_index) = next_idx;
             - script.execute: pl_render
 
-      # Drücken des Knobs: Startet die ausgewählte Playlist
+      # Drücken des Knobs: Löst die Wiedergabe auf der Anlage aus
       - if:
           condition: { lambda: 'return id(g_base)==11 && id(g_tap_seq) != id(g_pl_lasttap);' }
           then:
@@ -105,15 +114,14 @@ lvgl:
             height: 240
             bg_color: 0x00000000 # Transparent, nutzt Page-Hintergrund
             border_width: 0
-            # Die im Display angezeigten Texte (Reihenfolge muss exakt zu den IDs oben passen!)
+            # Die im Display angezeigten Kurztexte (für perfekte Lesbarkeit im Kreis)
             items:
-              - text: "Top Hits of 2021"
-              - text: "Top Hits of 2022"
-              - text: "Top Hits of 2023"
-              - text: "Top Hits of 2024"
-              - text: "Top Tracks of 2025" # Gekürzt, damit es auf dem runden Display nicht abschneidet
+              - text: "Top Hits 2021"
+              - text: "Top Hits 2022"
+              - text: "Top Hits 2023"
+              - text: "Top Hits 2024"
+              - text: "Top Tracks 2025"
               - text: "High Quality"
               - text: "Energia"
               - text: "Gute-Laune-Mix"
-              - text: "500 Random"         # Gekürzt für bessere Lesbarkeit im Kreis
-
+              - text: "500 Random"
