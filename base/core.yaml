@@ -163,11 +163,11 @@ esphome:
               else if (tok == "sensors") id = 8;
               else if (tok == "snake") id = 9;
 
-                            if (id >= 0 && id < 16 && id(g_present)[id]) id(g_order)[id(g_order_n)++] = id;
+              if (id >= 0 && id < 16 && id(g_present)[id]) id(g_order)[id(g_order_n)++] = id;
               if (comma == std::string::npos) break;
               pos = comma + 1;
             }
-            if (id(g_order_n) == 0) id(g_order)[id(g_order_n)++] = 0
+            if (id(g_order_n) == 0) id(g_order)[id(g_order_n)++] = 0;
   // safety: keep the clock
     - priority: -50
       then:
