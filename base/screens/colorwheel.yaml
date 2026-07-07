@@ -1,4 +1,4 @@
-# Farbsteuerungs-Screen mit dynamischem Rand-Farbrad und zentrierten Slidern
+# Farbsteuerungs-Screen - Clean-Version ohne fehlerhafte Widgets
 esphome:
   on_boot:
     - priority: 650
@@ -14,10 +14,6 @@ globals:
     type: int
     restore_value: no
     initial_value: '0'
-  # Ein C++ Zeiger, um das dynamisch erstellte Farbrad im Speicher zu behalten
-  - id: g_my_colorwheel_ptr
-    type: 'lv_obj_t*'
-    initial_value: 'nullptr'
 
 script:
   - id: cw_commit
@@ -29,8 +25,11 @@ script:
           data:
             entity_id: light.wohnung_bunt
             hs_color: !lambda |-
-              if (id(g_my_colorwheel_ptr) == nullptr) return std::string("[0, 100]");
-              lv_color_hsv_t hsv = lv_colorwheel_get_hsv(id(g_my_colorwheel_ptr));
+              // Holt das Farbrad aus der Page (es ist das erste Kind-Element, Index 0)
+              auto* page_obj = (lv_obj_t*) id(page_colorwheel).get_obj();
+              auto* cw = lv_obj_get_child(page_obj, 0);
+              if (cw == nullptr) return std::string("[0, 100]");
+              lv_color_hsv_t hsv = lv_colorwheel_get_hsv(cw);
               char buf[32];
               sprintf(buf, "[%d, %d]", hsv.h, hsv.s);
               return std::string(buf);
@@ -46,22 +45,15 @@ script:
   - id: cw_render
     then:
       - lambda: |-
-          // Falls das Farbrad noch nicht erzeugt wurde, erstellen wir es jetzt nativ im Page-Container
-          if (id(g_my_colorwheel_ptr) == nullptr) {
-              auto* parent_page = (lv_obj_t*) id(page_colorwheel).get_obj();
-              id(g_my_colorwheel_ptr) = lv_colorwheel_create(parent_page, true);
-              
-              // Größe und Ausrichtung setzen
-              lv_obj_set_size(id(g_my_colorwheel_ptr), 360, 360);
-              lv_obj_align(id(g_my_colorwheel_ptr), LV_ALIGN_CENTER, 0, 0);
+          auto* page_obj = (lv_obj_t*) id(page_colorwheel).get_obj();
+          auto* cw = lv_obj_get_child(page_obj, 0);
+          if (cw != nullptr) {
+              lv_color_hsv_t hsv = lv_colorwheel_get_hsv(cw);
+              hsv.h = id(g_cw_hue);
+              hsv.s = 100; 
+              hsv.v = 100; 
+              lv_colorwheel_set_hsv(cw, hsv);
           }
-          
-          // HSV Werte aktualisieren
-          lv_color_hsv_t hsv = lv_colorwheel_get_hsv(id(g_my_colorwheel_ptr));
-          hsv.h = id(g_cw_hue);
-          hsv.s = 100; 
-          hsv.v = 100; 
-          lv_colorwheel_set_hsv(id(g_my_colorwheel_ptr), hsv);
 
 interval:
   - interval: 50ms
@@ -100,10 +92,20 @@ interval:
 lvgl:
   pages:
     - id: page_colorwheel
-      bg_color: 0x000000     
+      bg_color: 0x000000
+      # on_show wird nativ von Pages unterstützt und knallt im YAML-Parser nicht!
+      on_show:
+        - lambda: |-
+            auto* page_obj = (lv_obj_t*) id(page_colorwheel).get_obj();
+            // Erstellt das Farbrad nur, wenn noch kein Kind-Element existiert
+            if (lv_obj_get_child_cnt(page_obj) == 0) {
+                auto* cw = lv_colorwheel_create(page_obj, true);
+                lv_obj_set_size(cw, 360, 360);
+                lv_obj_align(cw, LV_ALIGN_CENTER, 0, 0);
+                // Schiebt das Farbrad im Hintergrund nach ganz hinten, damit die Slider sichtbar bleiben
+                lv_obj_move_background(cw);
+            }
       widgets:
-        # Hinweis: Das Farbrad wird jetzt vollautomatisch via C++ injiziert!
-
         # --- OBERE SYMMETRIE-HÄLFTE: HELLIGKEIT ---
         - slider:
             id: brightness_slider
@@ -154,4 +156,7 @@ lvgl:
             align: CENTER
             x: -80           
             y: 25
-            text
+            text: "\U000f050f" 
+            text_font: font_artist
+            text_color: 0x888888
+
