@@ -2465,6 +2465,46 @@ interval:
                       id: media_player_speaker
                       media_file: alarm_sound
                       announcement: true
+interval:
+  # ... (andere Intervalle bleiben stehen) ...
+
+  # NEU: Überwachung für den Wechsel zum Farbrad (ID 10)
+  - interval: 50ms
+    then: 
+      - if: 
+          condition:
+            lambda: !lambda |-
+              return id(g_nav_req) && id(g_base)==10;
+          then: 
+            - lambda: !lambda |-
+                id(g_nav_req) = false;
+                id(g_knob_capture) = true;
+                id(g_cw_lasttap) = id(g_tap_seq);
+            - lvgl.page.show:
+                id: page_colorwheel
+                animation: LV_SCREEN_LOAD_ANIM_MOVE_LEFT
+                time: 250ms
+            - script.execute:
+                id: cw_render
+
+  # NEU: Überwachung für den Wechsel zu den Playlists (ID 11)
+  - interval: 50ms
+    then:
+      - if:
+          condition:
+            lambda: !lambda |-
+              return id(g_nav_req) && id(g_base)==11;
+          then:
+            - lambda: !lambda |-
+                id(g_nav_req) = false; 
+                id(g_knob_capture) = true; 
+                id(g_pl_lasttap) = id(g_tap_seq);
+            - lvgl.page.show:
+                id: page_playlists
+                animation: LV_SCREEN_LOAD_ANIM_MOVE_LEFT
+                time: 250ms
+            - script.execute:
+                id: pl_render
 
 lvgl:
   # A <25% buffer lands in FAST internal RAM (instead of slow PSRAM at the default 100%)
