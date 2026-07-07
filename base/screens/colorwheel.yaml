@@ -1,4 +1,4 @@
-# Farbsteuerungs-Screen für LVGL 9 (Sicher vor unvollständigen Typen)
+# Farbsteuerungs-Screen für LVGL 9 (Absolut sicher vor C++ Typenfehlern)
 globals:
   - id: g_cw_hue
     type: uint16_t
@@ -28,11 +28,13 @@ script:
               sprintf(buf, "[%d, 100]", id(g_cw_hue));
               return std::string(buf);
             brightness_pct: !lambda |-
-              // KORREKTUR: Nutzung der sicheren ESPHome .get_value() Methode
-              return std::to_string((int)id(brightness_slider).get_value());
+              // KORREKTUR: Explizites Casting in std::string verhindert den Compiler-Fehler
+              int val = (int)id(brightness_slider).get_value();
+              return std::string(std::to_string(val));
             color_temp_kelvin: !lambda |-
-              // KORREKTUR: Nutzung der sicheren ESPHome .get_value() Methode
-              return std::to_string((int)id(temp_slider).get_value());
+              // KORREKTUR: Explizites Casting in std::string verhindert den Compiler-Fehler
+              int val = (int)id(temp_slider).get_value();
+              return std::string(std::to_string(val));
 
 interval:
   - interval: 50ms
