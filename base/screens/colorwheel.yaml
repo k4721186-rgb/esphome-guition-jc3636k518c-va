@@ -1,4 +1,4 @@
-# Farbsteuerungs-Screen für LVGL 9 (Absolut sicher vor C++ Typenfehlern)
+# Farbsteuerungs-Screen für LVGL 9 (Sicher vor unvollständigen C++ Typen)
 globals:
   - id: g_cw_hue
     type: uint16_t
@@ -8,6 +8,15 @@ globals:
     type: int
     restore_value: no
     initial_value: '0'
+  # NEU: Globale Variablen speichern die Slider-Werte zwischen
+  - id: g_cw_brightness
+    type: int
+    restore_value: no
+    initial_value: '80'
+  - id: g_cw_temp
+    type: int
+    restore_value: no
+    initial_value: '4000'
 
 script:
   - id: cw_render
@@ -28,13 +37,11 @@ script:
               sprintf(buf, "[%d, 100]", id(g_cw_hue));
               return std::string(buf);
             brightness_pct: !lambda |-
-              // KORREKTUR: Explizites Casting in std::string verhindert den Compiler-Fehler
-              int val = (int)id(brightness_slider).get_value();
-              return std::string(std::to_string(val));
+              // Absolut sicher: Reiner Zahlen-Rückgabewert aus globaler Variable
+              return std::to_string(id(g_cw_brightness));
             color_temp_kelvin: !lambda |-
-              // KORREKTUR: Explizites Casting in std::string verhindert den Compiler-Fehler
-              int val = (int)id(temp_slider).get_value();
-              return std::string(std::to_string(val));
+              // Absolut sicher: Reiner Zahlen-Rückgabewert aus globaler Variable
+              return std::to_string(id(g_cw_temp));
 
 interval:
   - interval: 50ms
@@ -77,6 +84,7 @@ lvgl:
     - id: page_colorwheel
       bg_color: 0x000000
       widgets:
+        # --- OBERE SÄULE: HELLIGKEIT ---
         - slider:
             id: brightness_slider
             align: CENTER
@@ -93,7 +101,10 @@ lvgl:
             knob:
               bg_color: 0xEEEEEE
             on_value:
-              - script.execute: cw_commit
+              then:
+                # Wir schreiben den Wert bei Änderung direkt in die globale Variable
+                - lambda: 'id(g_cw_brightness) = (int)x;'
+                - script.execute: cw_commit
 
         - label:
             align: CENTER
@@ -103,6 +114,7 @@ lvgl:
             text_font: font_artist
             text_color: 0x888888
 
+        # --- UNTERE SÄULE: FARBTEMPERATUR ---
         - slider:
             id: temp_slider
             align: CENTER
@@ -119,7 +131,10 @@ lvgl:
             knob:
               bg_color: 0xFFFFFF
             on_value:
-              - script.execute: cw_commit
+              then:
+                # Wir schreiben den Wert bei Änderung direkt in die globale Variable
+                - lambda: 'id(g_cw_temp) = (int)x;'
+                - script.execute: cw_commit
 
         - label:
             align: CENTER
