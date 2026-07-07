@@ -82,12 +82,14 @@ packages:
     files:
       - base/core.yaml
       - base/screens/player.yaml       # optional: music player (album art + transport)
+      - base/screens/playlists.yaml
       - base/screens/timer.yaml        # optional: timer screen in the carousel (voice timers/alarm stay regardless)
-      - base/screens/cool-cars.yaml    # optional: Cool Cars game
-      - base/screens/space-wars.yaml   # optional: Space Wars game
-      - base/screens/snake.yaml        # optional: Snake game (knob steers)
+     # - base/screens/cool-cars.yaml    # optional: Cool Cars game
+    #  - base/screens/space-wars.yaml   # optional: Space Wars game
+   #   - base/screens/snake.yaml        # optional: Snake game (knob steers)
       - base/screens/weather.yaml      # optional: weather (today + 7-day, knob scrolls days)
+      - base/screens/colorwheel.yaml
       - base/screens/thermostat.yaml   # optional: thermostat (climate.* entity; knob sets target, tap on/off)
       - base/screens/sensors.yaml      # optional: sensors glance (1-6 HA entities, knob cycles)
-      - base/screens/demo.yaml         # optional: commented example screen (TAP ME!) + Widgets settings
+     # - base/screens/demo.yaml         # optional: commented example screen (TAP ME!) + Widgets settings
     refresh: 0s        # always pull the latest beta (set to e.g. 1d once it stabilizes) to this file (both must be local paths).
