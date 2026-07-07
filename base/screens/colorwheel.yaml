@@ -8,7 +8,6 @@ globals:
     type: int
     restore_value: no
     initial_value: '0'
-  # NEU: Globale Variablen speichern die Slider-Werte zwischen
   - id: g_cw_brightness
     type: int
     restore_value: no
@@ -32,15 +31,13 @@ script:
           service: light.turn_on
           data:
             entity_id: light.wohnung_bunt
-            hs_color: !lambda |-
-              char buf[32];
-              sprintf(buf, "[%d, 100]", id(g_cw_hue));
-              return std::string(buf);
+            # KORREKTUR: Korrektes, numerisches HS-Format für HA (ohne String-Formatierung)
+            hs_color: 
+              - !lambda "return id(g_cw_hue);"
+              - 100
             brightness_pct: !lambda |-
-              // Absolut sicher: Reiner Zahlen-Rückgabewert aus globaler Variable
               return std::to_string(id(g_cw_brightness));
             color_temp_kelvin: !lambda |-
-              // Absolut sicher: Reiner Zahlen-Rückgabewert aus globaler Variable
               return std::to_string(id(g_cw_temp));
 
 interval:
@@ -53,6 +50,8 @@ interval:
                 id(g_nav_req) = false; 
                 id(g_knob_capture) = true; 
                 id(g_cw_lasttap) = id(g_tap_seq);
+                // KORREKTUR: Dem System mitteilen, dass wir nun auf Screen 3 angekommen sind!
+                id(g_base) = 3; 
             - lvgl.page.show: { id: page_colorwheel, animation: move_left, time: 250ms }
             - script.execute: cw_render
 
@@ -102,7 +101,6 @@ lvgl:
               bg_color: 0xEEEEEE
             on_value:
               then:
-                # Wir schreiben den Wert bei Änderung direkt in die globale Variable
                 - lambda: 'id(g_cw_brightness) = (int)x;'
                 - script.execute: cw_commit
 
@@ -132,7 +130,6 @@ lvgl:
               bg_color: 0xFFFFFF
             on_value:
               then:
-                # Wir schreiben den Wert bei Änderung direkt in die globale Variable
                 - lambda: 'id(g_cw_temp) = (int)x;'
                 - script.execute: cw_commit
 
