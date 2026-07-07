@@ -1,4 +1,4 @@
-# Farbsteuerungs-Screen mit optimaler Raumaufteilung im Zentrum
+# Farbsteuerungs-Screen mit maximiertem Rand-Farbrad und zentriertem Helligkeits-Slider
 esphome:
   on_boot:
     - priority: 650
@@ -55,7 +55,7 @@ interval:
       - if:
           condition: { lambda: 'return id(g_nav_req) && id(g_base)==10;' }
           then:
-            - lambda: 'id(g_nav_req) = false; id(g_knob_capture) = true; id(g_th_lasttap) = id(g_tap_seq);'
+            - lambda: 'id(g_nav_req) = false; id(g_knob_capture) = true; id(g_cw_lasttap) = id(g_tap_seq);'
             - lvgl.page.show: { id: page_colorwheel, animation: move_left, time: 250ms }
             - script.execute: cw_render
 
@@ -74,34 +74,39 @@ interval:
             - script.execute: cw_commit
 
       - if:
-          condition: { lambda: 'return id(g_base)==10 && id(g_tap_seq) != id(g_th_lasttap);' }
+          condition: { lambda: 'return id(g_base)==10 && id(g_tap_seq) != id(g_cw_lasttap);' }
           then:
-            - lambda: 'id(g_th_lasttap) = id(g_tap_seq);'
+            - lambda: 'id(g_cw_lasttap) = id(g_tap_seq);'
             - homeassistant.service:
                 service: light.toggle
                 data:
                   entity_id: light.wohnung_bunt
 
+# Das visuelle Layout in LVGL
 lvgl:
   pages:
     - id: page_colorwheel
       bg_color: 0x000000     
       widgets:
-        # 360° FARBRAD AM ÄUSSERSTEN ANTENNENRAND
-        - colorwheel:
+        # Wir nutzen ein generisches Basis-Objekt und wandeln es beim Laden per C++ in das echte Farbrad um
+        - obj:
             id: my_colorwheel
             align: CENTER
             width: 360       
             height: 360      
-            adjustable: false 
+            on_init:
+              - lambda: |-
+                  auto* obj = (lv_obj_t*) id(my_colorwheel).get_obj();
+                  // Schaltet den Objekttyp nativ im RAM auf das 360° Farbrad um
+                  lv_colorwheel_create(obj, true);
 
         # --- OBERE SYMMETRIE-HÄLFTE: HELLIGKEIT ---
         - slider:
             id: brightness_slider
             align: CENTER
-            x: 10            # Leicht nach rechts versetzt, um Platz für das MDI-Icon links zu machen
-            y: -25           # Im oberen Teil des Innenkreises
-            width: 150       # Schmaler, da der Kreis hier enger wird
+            x: 10            
+            y: -25           
+            width: 150       
             height: 14       
             min_value: 1
             max_value: 100
@@ -116,9 +121,9 @@ lvgl:
 
         - label:
             align: CENTER
-            x: -80           # Exakt links neben dem Helligkeits-Slider platziert
+            x: -80           
             y: -25
-            text: "\U000f0335" # MDI-Icon für Glühbirne/Helligkeit
+            text: "\U000f0335" 
             text_font: font_artist
             text_color: 0x888888
 
@@ -127,15 +132,15 @@ lvgl:
             id: temp_slider
             align: CENTER
             x: 10            
-            y: 25            # Im unteren Teil des Innenkreises
-            width: 150       # Gleiche Breite wie oben für perfekte visuelle Symmetrie
+            y: 25            
+            width: 150       
             height: 14       
             min_value: 2700  
             max_value: 6500  
             value: 4000      
-            bg_color: 0xFFB060  # Warmweiß-Verlauf-Basis
+            bg_color: 0xFFB060  
             indicator:
-              bg_color: 0xD0E0FF # Kaltweiß-Indikator
+              bg_color: 0xD0E0FF 
             knob:
               bg_color: 0xFFFFFF
             on_value_changed:
@@ -143,8 +148,8 @@ lvgl:
 
         - label:
             align: CENTER
-            x: -80           # Exakt links neben dem Temperatur-Slider platziert
+            x: -80           
             y: 25
-            text: "\U000f050f" # MDI-Icon für Thermometer/Farbtemperatur
+            text: "\U000f050f" 
             text_font: font_artist
             text_color: 0x888888
