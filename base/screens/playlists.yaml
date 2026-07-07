@@ -1,0 +1,119 @@
+# Playlist-Auswahl-Screen mit LVGL List Widget (Nativ - Variante B)
+esphome:
+  on_boot:
+    # Registriert die Seite im Karussell (z.B. ID 11, passe die ID ggf. an deine g_present-Logik an)
+    - priority: 645
+      then:
+        - lambda: 'id(g_present)[11] = true;'
+
+globals:
+  - id: g_pl_index
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: g_pl_max
+    type: int
+    restore_value: no
+    initial_value: '8' # 9 Playlists gesamt (Index 0 bis 8)
+  - id: g_pl_lasttap
+    type: int
+    restore_value: no
+    initial_value: '0'
+
+script:
+  # --- VARIANTE B: STARTET DIE PLAYLIST ÜBER DEN NAMEN IN MUSIC ASSISTANT ---
+  - id: pl_commit
+    then:
+      - homeassistant.service:
+          service: music_assistant.play_media
+          data:
+            entity_id: media_player.music_frame_wohnzimmer
+            media_type: "playlist"
+            media_id: !lambda |-
+              int idx = id(g_pl_index);
+              if (idx == 0) return std::string("Top Hits of 2021");
+              if (idx == 1) return std::string("Top Hits of 2022");
+              if (idx == 2) return std::string("Top Hits of 2023");
+              if (idx == 3) return std::string("Top Hits of 2024");
+              if (idx == 4) return std::string("Top Tracks of 2025 Global");
+              if (idx == 5) return std::string("High Quality");
+              if (idx == 6) return std::string("Energia");
+              if (idx == 7) return std::string("Gute-Laune-Mix");
+              if (idx == 8) return std::string("500 Random tracks (from library)");
+              return std::string("");
+
+  # Aktualisiert den visuellen Fokus (Auswahl) in der LVGL-Liste
+  - id: pl_render
+    then:
+      - lambda: |-
+          auto* list_obj = (lv_obj_t*) id(my_playlist_list).get_obj();
+          int idx = id(g_pl_index);
+          
+          // Holt den entsprechenden Button aus der Liste und setzt den Fokus (Visual State)
+          lv_obj_t* btn = lv_obj_get_child(list_obj, idx);
+          if (btn != nullptr) {
+              lv_group_focus_obj(btn);
+              lv_obj_scroll_to_view(btn, LV_ANIM_ON); // Scrollt die Liste automatisch mit
+          }
+
+interval:
+  # Navigation & Seitenwechsel
+  - interval: 50ms
+    then:
+      - if:
+          condition: { lambda: 'return id(g_nav_req) && id(g_base)==11;' } # Passe g_base an dein screen_order an
+          then:
+            - lambda: 'id(g_nav_req) = false; id(g_knob_capture) = true; id(g_pl_lasttap) = id(g_tap_seq);'
+            - lvgl.page.show: { id: page_playlists, animation: move_left, time: 250ms }
+            - script.execute: pl_render
+            
+  # Knob-Steuerung: Drehen scrollt durch die Liste
+  - interval: 120ms
+    then:
+      - if:
+          condition: { lambda: 'return id(g_base)==11 && id(g_knob_delta) != 0;' }
+          then:
+            - lambda: |-
+                int next_idx = id(g_pl_index) + id(g_knob_delta);
+                id(g_knob_delta) = 0;
+                
+                // Begrenzung (Scroll-Stopp an den Enden)
+                if (next_idx < 0) next_idx = 0;
+                if (next_idx > id(g_pl_max)) next_idx = id(g_pl_max);
+                
+                id(g_pl_index) = next_idx;
+            - script.execute: pl_render
+
+      # Drücken des Knobs: Startet die ausgewählte Playlist
+      - if:
+          condition: { lambda: 'return id(g_base)==11 && id(g_tap_seq) != id(g_pl_lasttap);' }
+          then:
+            - lambda: 'id(g_pl_lasttap) = id(g_tap_seq);'
+            - script.execute: pl_commit
+
+# Das visuelle Layout in LVGL
+lvgl:
+  pages:
+    - id: page_playlists
+      bg_color: 0x0B0F19
+      widgets:
+        # Die vertikale Liste im Zentrum (Breite/Höhe angepasst an das runde Display)
+        - list:
+            id: my_playlist_list
+            align: CENTER
+            width: 240
+            height: 240
+            bg_color: 0x00000000 # Transparent, nutzt Page-Hintergrund
+            border_width: 0
+            # Die im Display angezeigten Texte (Reihenfolge muss exakt zu den IDs oben passen!)
+            items:
+              - text: "Top Hits of 2021"
+              - text: "Top Hits of 2022"
+              - text: "Top Hits of 2023"
+              - text: "Top Hits of 2024"
+              - text: "Top Tracks of 2025" # Gekürzt, damit es auf dem runden Display nicht abschneidet
+              - text: "High Quality"
+              - text: "Energia"
+              - text: "Gute-Laune-Mix"
+              - text: "500 Random"         # Gekürzt für bessere Lesbarkeit im Kreis
+
