@@ -47,7 +47,7 @@ interval:
   - interval: 50ms
     then:
       - if:
-          condition: { lambda: 'return id(g_nav_req) && id(g_base)==14;' }
+          condition: { lambda: 'return id(g_nav_req) && id(g_base)==3;' }
           then:
             - lambda: |-
                 id(g_nav_req) = false; 
@@ -59,7 +59,7 @@ interval:
   - interval: 80ms
     then:
       - if:
-          condition: { lambda: 'return id(g_base)==10 && id(g_knob_delta) != 0;' }
+          condition: { lambda: 'return id(g_base)==3 && id(g_knob_delta) != 0;' }
           then:
             - lambda: |-
                 int16_t new_hue = (int16_t)id(g_cw_hue) + (id(g_knob_delta) * 4);
@@ -71,7 +71,7 @@ interval:
             - script.execute: cw_commit
 
       - if:
-          condition: { lambda: 'return id(g_base)==10 && id(g_tap_seq) != id(g_cw_lasttap);' }
+          condition: { lambda: 'return id(g_base)==3 && id(g_tap_seq) != id(g_cw_lasttap);' }
           then:
             - lambda: 'id(g_cw_lasttap) = id(g_tap_seq);'
             - homeassistant.service:
