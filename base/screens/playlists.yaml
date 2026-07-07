@@ -1,7 +1,6 @@
-# Playlist-Auswahl-Screen mit LVGL List Widget (Nativ für Denon AVR)
+# Playlist-Auswahl-Screen mit LVGL Roller Widget (Nativ & Fehlerfrei)
 esphome:
   on_boot:
-    # Registriert die Seite im Karussell (z.B. ID 11, passe die ID ggf. an deine g_present-Logik an)
     - priority: 645
       then:
         - lambda: 'id(g_present)[11] = true;'
@@ -14,7 +13,7 @@ globals:
   - id: g_pl_max
     type: int
     restore_value: no
-    initial_value: '8' # 9 Playlists gesamt (Index 0 bis 8)
+    initial_value: '8' # 9 Playlists gesamt (0 bis 8)
   - id: g_pl_lasttap
     type: int
     restore_value: no
@@ -24,15 +23,13 @@ script:
   # --- MUSIC ASSISTANT PLAYLIST WIEDERGABE AUF DEM DENON ---
   - id: pl_commit
     then:
-      # Schaltet den Denon Receiver ein, falls er im Standby-Modus ist
       - homeassistant.service:
           service: media_player.turn_on
           data:
             entity_id: media_player.denon_avr_x1800h_4
             
-      - delay: 500ms # Kurze Pause, damit der Receiver hochfahren und reagieren kann
+      - delay: 500ms
       
-      # Startet die ausgewählte Playlist via Music Assistant auf dem Denon
       - homeassistant.service:
           service: music_assistant.play_media
           data:
@@ -51,32 +48,26 @@ script:
               if (idx == 8) return std::string("500 Random tracks (from library)");
               return std::string("");
 
-  # Aktualisiert den visuellen Fokus (Auswahl) in der LVGL-Liste
+  # Aktualisiert die Walzen-Auswahl im Display
   - id: pl_render
     then:
       - lambda: |-
-          auto* list_obj = (lv_obj_t*) id(my_playlist_list).get_obj();
+          auto* roller_obj = (lv_obj_t*) id(my_playlist_roller).get_obj();
           int idx = id(g_pl_index);
-          
-          // Holt den entsprechenden Button aus der Liste und setzt den Fokus (Visual State)
-          lv_obj_t* btn = lv_obj_get_child(list_obj, idx);
-          if (btn != nullptr) {
-              lv_group_focus_obj(btn);
-              lv_obj_scroll_to_view(btn, LV_ANIM_ON); // Scrollt die Liste automatisch mit
-          }
+          lv_roller_set_selected(roller_obj, idx, LV_ANIM_ON);
 
 interval:
   # Navigation & Seitenwechsel
   - interval: 50ms
     then:
       - if:
-          condition: { lambda: 'return id(g_nav_req) && id(g_base)==11;' } # Entspricht der Position in screen_order
+          condition: { lambda: 'return id(g_nav_req) && id(g_base)==11;' }
           then:
             - lambda: 'id(g_nav_req) = false; id(g_knob_capture) = true; id(g_pl_lasttap) = id(g_tap_seq);'
             - lvgl.page.show: { id: page_playlists, animation: move_left, time: 250ms }
             - script.execute: pl_render
             
-  # Knob-Steuerung: Drehen scrollt durch die Liste
+  # Knob-Steuerung: Drehen scrollt die Walze weiter
   - interval: 120ms
     then:
       - if:
@@ -86,14 +77,13 @@ interval:
                 int next_idx = id(g_pl_index) + id(g_knob_delta);
                 id(g_knob_delta) = 0;
                 
-                // Begrenzung (Scroll-Stopp an den Enden)
                 if (next_idx < 0) next_idx = 0;
                 if (next_idx > id(g_pl_max)) next_idx = id(g_pl_max);
                 
                 id(g_pl_index) = next_idx;
             - script.execute: pl_render
 
-      # Drücken des Knobs: Löst die Wiedergabe auf der Anlage aus
+      # Drücken des Knobs: Startet Musik
       - if:
           condition: { lambda: 'return id(g_base)==11 && id(g_tap_seq) != id(g_pl_lasttap);' }
           then:
@@ -106,22 +96,20 @@ lvgl:
     - id: page_playlists
       bg_color: 0x0B0F19
       widgets:
-        # Die vertikale Liste im Zentrum (Breite/Höhe angepasst an das runde Display)
-        - list:
-            id: my_playlist_list
+        # Das native, runde-Display-freundliche Roller (Walzen) Widget
+        - roller:
+            id: my_playlist_roller
             align: CENTER
-            width: 240
-            height: 240
-            bg_color: 0x00000000 # Transparent, nutzt Page-Hintergrund
-            border_width: 0
-            # Die im Display angezeigten Kurztexte (für perfekte Lesbarkeit im Kreis)
-            items:
-              - text: "Top Hits 2021"
-              - text: "Top Hits 2022"
-              - text: "Top Hits 2023"
-              - text: "Top Hits 2024"
-              - text: "Top Tracks 2025"
-              - text: "High Quality"
-              - text: "Energia"
-              - text: "Gute-Laune-Mix"
-              - text: "500 Random"
+            width: 220
+            # Zeigt standardmäßig 3 Zeilen gleichzeitig an (die aktive in der Mitte, groß)
+            visible_row_count: 3 
+            options:
+              - "Top Hits 2021"
+              - "Top Hits 2022"
+              - "Top Hits 2023"
+              - "Top Hits 2024"
+              - "Top Tracks 2025"
+              - "High Quality"
+              - "Energia"
+              - "Gute-Laune-Mix"
+              - "500 Random"
