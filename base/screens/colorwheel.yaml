@@ -25,7 +25,7 @@ script:
       - homeassistant.service:
           service: light.turn_on
           data:
-            entity_id: light.wohnzimmer_beleuchtung # Tausche dies gegen deine Home Assistant Licht-Entität aus
+            entity_id: light.wohnung_bunt # Tausche dies gegen deine Home Assistant Licht-Entität aus
             hs_color: !lambda |-
               // Wir holen den aktuellen Hue-Wert vom LVGL-Widget (0-360)
               auto* cw = (lv_obj_t*) id(my_colorwheel).get_obj();
@@ -87,7 +87,7 @@ interval:
             - homeassistant.service:
                 service: light.toggle
                 data:
-                  entity_id: light.wohnzimmer_beleuchtung
+                  entity_id: light.wohnung_bunt
 
 # Das visuelle Layout in LVGL
 lvgl:
