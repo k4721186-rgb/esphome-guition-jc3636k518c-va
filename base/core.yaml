@@ -731,7 +731,7 @@ globals:
 
   # --- Modular carousel contract: shared globals so the core never names a screen's symbols ---
   - id: g_order
-    type: int[16]
+    type: int[24]
     restore_value: no
   - id: g_order_n
     type: int
@@ -765,7 +765,7 @@ globals:
     type: std::string
     restore_value: no
   - id: g_present        # which screens registered (by base id); carousel is built from screen_order
-    type: bool[16]
+    type: bool[24]
     restore_value: no
   - id: g_tap_seq        # bumped on every normal-mode tap; screens watch it to react (shared infra)
     type: int
@@ -799,13 +799,13 @@ globals:
     restore_value: no
     initial_value: '0'
   - id: g_wopt_group     # which Widgets group each option belongs to
-    type: int[16]
+    type: int[24]
     restore_value: no
   - id: g_wopt_label     # option label
-    type: std::string[16]
+    type: std::string[24]
     restore_value: no
   - id: g_wopt_kind      # 0 = toggle, 1 = action (confirm)
-    type: int[16]
+    type: int[24]
     restore_value: no
   - id: g_wopt_ptr       # &bool for toggles / &flag for actions
     type: "std::array<bool*, 16>"
@@ -815,7 +815,7 @@ globals:
     restore_value: no
     initial_value: '0'
   - id: g_wcur_opts      # registry indices of the current group's options
-    type: int[16]
+    type: int[24]
     restore_value: no
   - id: g_wcur_n
     type: int
