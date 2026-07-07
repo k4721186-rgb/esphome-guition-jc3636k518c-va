@@ -1,4 +1,4 @@
-# Farbsteuerungs-Screen über Custom Lambda (Sicher vor YAML-Validierungsfehlern)
+# Farbsteuerungs-Screen für LVGL 9 (Sicher vor API-Fehlern)
 globals:
   - id: g_cw_hue
     type: uint16_t
@@ -8,9 +8,6 @@ globals:
     type: int
     restore_value: no
     initial_value: '0'
-  - id: g_my_colorwheel_ptr
-    type: 'void*'
-    initial_value: 'nullptr'
 
 script:
   - id: cw_commit
@@ -22,28 +19,25 @@ script:
           data:
             entity_id: light.wohnung_bunt
             hs_color: !lambda |-
-              if (id(g_my_colorwheel_ptr) == nullptr) return std::string("[0, 100]");
-              lv_color_hsv_t hsv = lv_colorwheel_get_hsv((lv_obj_t*)id(g_my_colorwheel_ptr));
+              // In LVGL 9 berechnen wir den HS-String direkt aus der globalen Variable
               char buf[32];
-              sprintf(buf, "[%d, %d]", hsv.h, hsv.s);
+              sprintf(buf, "[%d, 100]", id(g_cw_hue));
               return std::string(buf);
             brightness_pct: !lambda |-
-              auto* sl = (lv_obj_t*) id(brightness_slider).get_obj();
+              // LVGL 9 verwendet .obj statt .get_obj()
+              auto* sl = id(brightness_slider).obj;
               return std::to_string(lv_slider_get_value(sl));
             color_temp_kelvin: !lambda |-
-              auto* sl = (lv_obj_t*) id(temp_slider).get_obj();
+              // LVGL 9 verwendet .obj statt .get_obj()
+              auto* sl = id(temp_slider).obj;
               return std::to_string(lv_slider_get_value(sl));
 
   - id: cw_render
     then:
       - lambda: |-
-          if (id(g_my_colorwheel_ptr) != nullptr) {
-              lv_color_hsv_t hsv = lv_colorwheel_get_hsv((lv_obj_t*)id(g_my_colorwheel_ptr));
-              hsv.h = id(g_cw_hue);
-              hsv.s = 100; 
-              hsv.v = 100; 
-              lv_colorwheel_set_hsv((lv_obj_t*)id(g_my_colorwheel_ptr), hsv);
-          }
+          // Das alte LVGL 8 Farbrad wurde entfernt.
+          // Die Farbänderung wird direkt im Log registriert und via cw_commit gesendet.
+          ESP_LOGD("colorwheel", "Aktueller Farbton (Hue): %d°", id(g_cw_hue));
 
 interval:
   - interval: 50ms
@@ -55,15 +49,7 @@ interval:
                 id(g_nav_req) = false; 
                 id(g_knob_capture) = true; 
                 id(g_cw_lasttap) = id(g_tap_seq);
-                
-                auto* page_obj = (lv_obj_t*) id(page_colorwheel).get_obj();
-                if (id(g_my_colorwheel_ptr) == nullptr) {
-                    auto* cw = lv_colorwheel_create(page_obj, true);
-                    lv_obj_set_size(cw, 360, 360);
-                    lv_obj_align(cw, LV_ALIGN_CENTER, 0, 0);
-                    lv_obj_move_background(cw); 
-                    id(g_my_colorwheel_ptr) = (void*)cw;
-                }
+                // Dynamisches Erstellen des alten Farbrads entfernt, um Abstürze zu verhindern
             - lvgl.page.show: { id: page_colorwheel, animation: move_left, time: 250ms }
             - script.execute: cw_render
 
@@ -112,7 +98,6 @@ lvgl:
               bg_color: 0xFFFFFF 
             knob:
               bg_color: 0xEEEEEE
-            # KORREKTUR: on_value statt on_value_changed
             on_value:
               - script.execute: cw_commit
 
@@ -140,7 +125,6 @@ lvgl:
               bg_color: 0xD0E0FF 
             knob:
               bg_color: 0xFFFFFF
-            # KORREKTUR: on_value statt on_value_changed
             on_value:
               - script.execute: cw_commit
 
