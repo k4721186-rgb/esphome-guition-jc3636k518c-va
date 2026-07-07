@@ -72,7 +72,7 @@ interval:
   - interval: 120ms
     then:
       - if:
-          condition: { lambda: 'return id(g_base)==11 && id(g_knob_delta) != 0;' }
+          condition: { lambda: 'return id(g_base)==18 && id(g_knob_delta) != 0;' }
           then:
             - lambda: |-
                 int next_idx = id(g_pl_index) + id(g_knob_delta);
