@@ -8,7 +8,6 @@ globals:
     type: int
     restore_value: no
     initial_value: '0'
-
 script:
   - id: cw_commit
     mode: restart
@@ -19,25 +18,17 @@ script:
           data:
             entity_id: light.wohnung_bunt
             hs_color: !lambda |-
-              // In LVGL 9 berechnen wir den HS-String direkt aus der globalen Variable
               char buf[32];
               sprintf(buf, "[%d, 100]", id(g_cw_hue));
               return std::string(buf);
             brightness_pct: !lambda |-
-              // LVGL 9 verwendet .obj statt .get_obj()
               auto* sl = id(brightness_slider).obj;
-              return std::to_string(lv_slider_get_value(sl));
+              // KORREKTUR: Explizit als std::string zurückgeben
+              return std::string(std::to_string(lv_slider_get_value(sl)));
             color_temp_kelvin: !lambda |-
-              // LVGL 9 verwendet .obj statt .get_obj()
               auto* sl = id(temp_slider).obj;
-              return std::to_string(lv_slider_get_value(sl));
-
-  - id: cw_render
-    then:
-      - lambda: |-
-          // Das alte LVGL 8 Farbrad wurde entfernt.
-          // Die Farbänderung wird direkt im Log registriert und via cw_commit gesendet.
-          ESP_LOGD("colorwheel", "Aktueller Farbton (Hue): %d°", id(g_cw_hue));
+              // KORREKTUR: Explizit als std::string zurückgeben
+              return std::string(std::to_string(lv_slider_get_value(sl)));
 
 interval:
   - interval: 50ms
