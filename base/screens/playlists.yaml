@@ -91,18 +91,20 @@ interval:
             - lambda: 'id(g_pl_lasttap) = id(g_tap_seq);'
             - script.execute: pl_commit
 
+# ... (oberer Teil bleibt exakt gleich)
+
 # Das visuelle Layout in LVGL
 lvgl:
   pages:
     - id: page_playlists
       bg_color: 0x0B0F19
       widgets:
-        # Das native, runde-Display-freundliche Roller (Walzen) Widget
         - roller:
             id: my_playlist_roller
             align: CENTER
             width: 220
-            visible_lines: 3 
+            # KORREKTUR: Wieder zurück auf den Standard-Namen geändert
+            visible_row_count: 3 
             options:
               - "Top Hits 2021"
               - "Top Hits 2022"
