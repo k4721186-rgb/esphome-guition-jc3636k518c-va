@@ -84,10 +84,12 @@ esphome:
             id(g_order_n) = 0;
             id(g_set_n) = 0;
             id(g_set_labels) = "";
-            for (int i = 0; i < 24; i++) id(g_present)[i] = false;
-            id(g_present)[0] = true;   // clock is always present
-            id(g_present)[14] = true;  // colorwheel aktivieren
-            id(g_present)[18] = true;  // playlists aktivieren
+                        for (int i = 0; i < 16; i++) id(g_present)[i] = false;
+            id(g_present)[0] = true;   // clock
+            id(g_present)[1] = true;   // player (falls genutzt)
+            id(g_present)[3] = true;   // Farbrad erzwingen
+            id(g_present)[4] = true;   // Playlists erzwingen
+
             id(g_wgrp_n) = 0; id(g_wgrp_labels) = ""; id(g_wgrp_idx) = 0;
             id(g_wopt_n) = 0; id(g_wcur_n) = 0; id(g_wopt_idx) = 0;
     - priority: 790
@@ -150,21 +152,18 @@ esphome:
               while (!tok.empty() && tok.front() == ' ') tok.erase(tok.begin());
               while (!tok.empty() && tok.back() == ' ') tok.pop_back();
               int id = -1;
-              if (tok == "clock") id = 0;
+                            if (tok == "clock") id = 0;
               else if (tok == "player") id = 1;
               else if (tok == "timer") id = 2;
-              else if (tok == "cars") id = 3;
-              else if (tok == "space") id = 4;
+              else if (tok == "colorwheel") id = 3;  // Überschreibt "cars"
+              else if (tok == "playlists") id = 4;   // Überschreibt "space"
               else if (tok == "weather") id = 5;
               else if (tok == "demo") id = 6;
               else if (tok == "thermostat") id = 7;
               else if (tok == "sensors") id = 8;
               else if (tok == "snake") id = 9;
-              // NEU: Trage hier das Farbrad und die Playlists ein
-              else if (tok == "colorwheel") id = 14;
-              else if (tok == "playlists") id = 18;
-              
-              if (id >= 0 && id < 24 && id(g_present)[id]) id(g_order)[id(g_order_n)++] = id;
+
+              if (id >= 0 && id < 16 && id(g_present)[id]) id(g_order)[id(g_order_n)++] = id;
               if (comma == std::string::npos) break;
               pos = comma + 1;
             }
@@ -731,7 +730,7 @@ globals:
 
   # --- Modular carousel contract: shared globals so the core never names a screen's symbols ---
   - id: g_order
-    type: int[24]
+    type: int[16]
     restore_value: no
   - id: g_order_n
     type: int
@@ -765,7 +764,7 @@ globals:
     type: std::string
     restore_value: no
   - id: g_present        # which screens registered (by base id); carousel is built from screen_order
-    type: bool[24]
+    type: bool[16]
     restore_value: no
   - id: g_tap_seq        # bumped on every normal-mode tap; screens watch it to react (shared infra)
     type: int
@@ -799,10 +798,10 @@ globals:
     restore_value: no
     initial_value: '0'
   - id: g_wopt_group     # which Widgets group each option belongs to
-    type: int[24]
+    type: int[16]
     restore_value: no
   - id: g_wopt_label     # option label
-    type: std::string[24]
+    type: std::string[16]
     restore_value: no
   - id: g_wopt_kind      # 0 = toggle, 1 = action (confirm)
     type: int[24]
