@@ -28,11 +28,11 @@ script:
               sprintf(buf, "[%d, 100]", id(g_cw_hue));
               return std::string(buf);
             brightness_pct: !lambda |-
-              // Typen-Casting entfernt, da .obj direkt den passenden Zeiger liefert
-              return std::to_string(lv_slider_get_value(id(brightness_slider).obj));
+              // KORREKTUR: Nutzung der sicheren ESPHome .get_value() Methode
+              return std::to_string((int)id(brightness_slider).get_value());
             color_temp_kelvin: !lambda |-
-              // Typen-Casting entfernt, da .obj direkt den passenden Zeiger liefert
-              return std::to_string(lv_slider_get_value(id(temp_slider).obj));
+              // KORREKTUR: Nutzung der sicheren ESPHome .get_value() Methode
+              return std::to_string((int)id(temp_slider).get_value());
 
 interval:
   - interval: 50ms
