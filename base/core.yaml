@@ -2486,13 +2486,13 @@ interval:
                 id: cw_render
     startup_delay: 0s
 
-  # Knob-Drehung & Drücken für das Farbrad (ID 10)
+  # Knob-Drehung & Drücken für das Farbrad (ID 3)
   - interval: 80ms
     then: 
       - if: 
           condition:
             lambda: !lambda |-
-              return id(g_base)==10 && id(g_knob_delta) != 0;
+              return id(g_base)==3 && id(g_knob_delta) != 0;
           then: 
             - lambda: !lambda |-
                 int16_t new_hue = (int16_t)id(g_cw_hue) + (id(g_knob_delta) * 4);
@@ -2507,7 +2507,7 @@ interval:
       - if:
           condition:
             lambda: !lambda |-
-              return id(g_base)==10 && id(g_tap_seq) != id(g_cw_lasttap);
+              return id(g_base)==3 && id(g_tap_seq) != id(g_cw_lasttap);
           then:
             - lambda: !lambda |-
                 id(g_cw_lasttap) = id(g_tap_seq);
@@ -2535,13 +2535,13 @@ interval:
                 id: pl_render
     startup_delay: 0s
 
-  # Knob-Drehung & Drücken für die Playlists (ID 11)
+  # Knob-Drehung & Drücken für die Playlists (ID 4)
   - interval: 120ms
     then:
       - if:
           condition:
             lambda: !lambda |-
-              return id(g_base)==11 && id(g_knob_delta) != 0;
+              return id(g_base)==4 && id(g_knob_delta) != 0;
           then:
             - lambda: !lambda |-
                 int next_idx = id(g_pl_index) + id(g_knob_delta);
@@ -2554,7 +2554,7 @@ interval:
       - if:
           condition:
             lambda: !lambda |-
-              return id(g_base)==11 && id(g_tap_seq) != id(g_pl_lasttap);
+              return id(g_base)==4 && id(g_tap_seq) != id(g_pl_lasttap);
           then:
             - lambda: !lambda |-
                 id(g_pl_lasttap) = id(g_tap_seq);
