@@ -137,10 +137,9 @@ esphome:
     - priority: 595
       then:
         - lambda: 'id(g_set_labels) += "\nSystem"; id(g_set_items)[id(g_set_n)++] = 15;'   # always last
-    - priority: 600
+        - priority: 600
       then:
         - lambda: |-
-            // build the carousel order from ${screen_order}, skipping screens not in this build
             std::string s = "${screen_order}";
             size_t pos = 0;
             while (true) {
@@ -159,11 +158,16 @@ esphome:
               else if (tok == "thermostat") id = 7;
               else if (tok == "sensors") id = 8;
               else if (tok == "snake") id = 9;
+              // NEU: Trage hier das Farbrad und die Playlists ein
+              else if (tok == "colorwheel") id = 10;
+              else if (tok == "playlists") id = 11;
+              
               if (id >= 0 && id < 16 && id(g_present)[id]) id(g_order)[id(g_order_n)++] = id;
               if (comma == std::string::npos) break;
               pos = comma + 1;
             }
-            if (id(g_order_n) == 0) id(g_order)[id(g_order_n)++] = 0;   // safety: keep the clock
+            if (id(g_order_n) == 0) id(g_order)[id(g_order_n)++] = 0;
+  // safety: keep the clock
     - priority: -50
       then:
         - if:
