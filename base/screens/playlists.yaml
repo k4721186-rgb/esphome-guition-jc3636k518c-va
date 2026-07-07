@@ -3,7 +3,7 @@ esphome:
   on_boot:
     - priority: 645
       then:
-        - lambda: 'id(g_present)[11] = true;'
+        - lambda: 'id(g_present)[4] = true;'
 
 globals:
   - id: g_pl_index
@@ -62,7 +62,7 @@ interval:
   - interval: 50ms
     then:
       - if:
-          condition: { lambda: 'return id(g_nav_req) && id(g_base)==11;' }
+          condition: { lambda: 'return id(g_nav_req) && id(g_base)==4;' }
           then:
             - lambda: 'id(g_nav_req) = false; id(g_knob_capture) = true; id(g_pl_lasttap) = id(g_tap_seq);'
             - lvgl.page.show: { id: page_playlists, animation: move_left, time: 250ms }
@@ -72,7 +72,7 @@ interval:
   - interval: 120ms
     then:
       - if:
-          condition: { lambda: 'return id(g_base)==18 && id(g_knob_delta) != 0;' }
+          condition: { lambda: 'return id(g_base)==4 && id(g_knob_delta) != 0;' }
           then:
             - lambda: |-
                 int next_idx = id(g_pl_index) + id(g_knob_delta);
@@ -86,7 +86,7 @@ interval:
 
       # Drücken des Knobs: Startet Musik
       - if:
-          condition: { lambda: 'return id(g_base)==11 && id(g_tap_seq) != id(g_pl_lasttap);' }
+          condition: { lambda: 'return id(g_base)==4 && id(g_tap_seq) != id(g_pl_lasttap);' }
           then:
             - lambda: 'id(g_pl_lasttap) = id(g_tap_seq);'
             - script.execute: pl_commit
