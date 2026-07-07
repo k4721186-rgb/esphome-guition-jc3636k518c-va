@@ -141,7 +141,7 @@ esphome:
     - priority: 595
       then:
         - lambda: 'id(g_set_labels) += "\nSystem"; id(g_set_items)[id(g_set_n)++] = 15;'   # always last
-        - priority: 600
+    - priority: 600
       then:
         - lambda: |-
             std::string s = "${screen_order}";
