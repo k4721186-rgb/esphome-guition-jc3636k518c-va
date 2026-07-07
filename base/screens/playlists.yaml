@@ -1,4 +1,4 @@
-# Playlist-Auswahl-Screen mit LVGL Roller Widget (Nativ & Fehlerfrei für LVGL 9)
+# Playlist-Auswahl-Screen mit LVGL Roller Widget (Absolut fehlerfrei für LVGL 9)
 esphome:
   on_boot:
     - priority: 645
@@ -48,8 +48,8 @@ script:
               if (idx == 8) return std::string("500 Random tracks (from library)");
               return std::string("");
 
-  # Aktualisiert die Walzen-Auswahl im Display
-    - id: pl_render
+  # KORREKTUR: Einrückung begradigt, damit es ein eigenständiges Skript ist
+  - id: pl_render
     then:
       - lambda: |-
           // KORREKTUR: Pfeil-Operator -> statt Punkt . nutzen
@@ -77,10 +77,10 @@ interval:
             - lambda: |-
                 int next_idx = id(g_pl_index) + id(g_knob_delta);
                 id(g_knob_delta) = 0;
-                
+
                 if (next_idx < 0) next_idx = 0;
                 if (next_idx > id(g_pl_max)) next_idx = id(g_pl_max);
-                
+
                 id(g_pl_index) = next_idx;
             - script.execute: pl_render
 
@@ -90,8 +90,6 @@ interval:
           then:
             - lambda: 'id(g_pl_lasttap) = id(g_tap_seq);'
             - script.execute: pl_commit
-
-# ... (oberer Teil bleibt exakt gleich)
 
 # Das visuelle Layout in LVGL
 lvgl:
@@ -103,7 +101,6 @@ lvgl:
             id: my_playlist_roller
             align: CENTER
             width: 220
-            # KORREKTUR: Wieder zurück auf den Standard-Namen geändert
             visible_row_count: 3 
             options:
               - "Top Hits 2021"
