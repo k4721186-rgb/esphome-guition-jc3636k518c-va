@@ -49,13 +49,13 @@ script:
               return std::string("");
 
   # Aktualisiert die Walzen-Auswahl im Display
-  - id: pl_render
+    - id: pl_render
     then:
       - lambda: |-
-          // Komplett nativer ESPHome-Weg anstelle von fehleranfälligen C++ Casts
-          auto roller = id(my_playlist_roller);
+          // KORREKTUR: Pfeil-Operator -> statt Punkt . nutzen
+          auto* roller_obj = id(my_playlist_roller)->obj;
           int idx = id(g_pl_index);
-          lv_roller_set_selected(roller.obj, idx, LV_ANIM_ON);
+          lv_roller_set_selected(roller_obj, idx, LV_ANIM_ON);
 
 interval:
   # Navigation & Seitenwechsel
