@@ -1,0 +1,112 @@
+# Farbsteuerungs-Screen mit LVGL Colorwheel (Nativ)
+esphome:
+  on_boot:
+    # Wir registrieren die Seite im Karussell (z.B. ID 10, passe die ID ggf. an deine g_present-Logik an)
+    - priority: 650
+      then:
+        - lambda: 'id(g_present)[10] = true;'
+
+globals:
+  - id: g_cw_hue
+    type: uint16_t
+    restore_value: no
+    initial_value: '0'
+  - id: g_cw_lasttap
+    type: int
+    restore_value: no
+    initial_value: '0'
+
+script:
+  # Übermittelt die Farbe nach 400ms Inaktivität an Home Assistant, um die API nicht zu überlasten
+  - id: cw_commit
+    mode: restart
+    then:
+      - delay: 400ms
+      - homeassistant.service:
+          service: light.turn_on
+          data:
+            entity_id: light.wohnzimmer_beleuchtung # Tausche dies gegen deine Home Assistant Licht-Entität aus
+            hs_color: !lambda |-
+              // Wir holen den aktuellen Hue-Wert vom LVGL-Widget (0-360)
+              auto* cw = (lv_obj_t*) id(my_colorwheel).get_obj();
+              lv_color_hsv_t hsv = lv_colorwheel_get_hsv(cw);
+              
+              // Home Assistant erwartet ein Array [Hue, Saturation]
+              // Wir konvertieren den Wert in einen passenden String für die API
+              char buf[32];
+              sprintf(buf, "[%d, %d]", hsv.h, hsv.s);
+              return std::string(buf);
+            brightness_pct: "80" # Optional: Setzt gleichzeitig eine feste Helligkeit
+
+  - id: cw_render
+    then:
+      - lambda: |-
+          // Aktualisiert das Farbrad-Widget basierend auf der globalen Hue-Variable
+          auto* cw = (lv_obj_t*) id(my_colorwheel).get_obj();
+          lv_color_hsv_t hsv = lv_colorwheel_get_hsv(cw);
+          hsv.h = id(g_cw_hue);
+          hsv.s = 100; // Volle Sättigung
+          hsv.v = 100; // Volle Helligkeit
+          lv_colorwheel_set_hsv(cw, hsv);
+
+interval:
+  # Navigation & Seitenwechsel (wird aktiv, wenn im Menü auf diese Seite geswiped wird)
+  - interval: 50ms
+    then:
+      - if:
+          condition: { lambda: 'return id(g_nav_req) && id(g_base)==10;' } # Passe g_base ID an dein screen_order an
+          then:
+            - lambda: 'id(g_nav_req) = false; id(g_knob_capture) = true; id(g_cw_lasttap) = id(g_tap_seq);'
+            - lvgl.page.show: { id: page_colorwheel, animation: move_left, time: 250ms }
+            - script.execute: cw_render
+            
+  # Knob-Steuerung: Drehen am Rad verändert den Farbton (Hue)
+  - interval: 80ms
+    then:
+      - if:
+          condition: { lambda: 'return id(g_base)==10 && id(g_knob_delta) != 0;' }
+          then:
+            - lambda: |-
+                // Farbkreis hat 360 Grad. Wir springen in 6-Grad-Schritten pro Klick
+                int16_t new_hue = (int16_t)id(g_cw_hue) + (id(g_knob_delta) * 6);
+                id(g_knob_delta) = 0;
+                
+                // Begrenzung & Überlaufschutz für das Rad (0-359 Grad)
+                if (new_hue >= 360) new_hue -= 360;
+                if (new_hue < 0) new_hue += 360;
+                
+                id(g_cw_hue) = (uint16_t)new_hue;
+            - script.execute: cw_render
+            - script.execute: cw_commit
+
+      # Drücken des Knobs: Schaltet das Licht um (Toggle)
+      - if:
+          condition: { lambda: 'return id(g_base)==10 && id(g_tap_seq) != id(g_cw_lasttap);' }
+          then:
+            - lambda: 'id(g_cw_lasttap) = id(g_tap_seq);'
+            - homeassistant.service:
+                service: light.toggle
+                data:
+                  entity_id: light.wohnzimmer_beleuchtung
+
+# Das visuelle Layout in LVGL
+lvgl:
+  pages:
+    - id: page_colorwheel
+      bg_color: 0x05050A
+      widgets:
+        # Das native LVGL Farbrad
+        - colorwheel:
+            id: my_colorwheel
+            align: CENTER
+            width: 260
+            height: 260
+            adjustable: false # Wir steuern es über den Knob, nicht über Touch, um Fehlbedienungen zu vermeiden
+            
+        # Ein zentriertes Textlabel in der Mitte des Rades zur Info
+        - label:
+            align: CENTER
+            y: 0
+            text: "FARBE"
+            text_font: font_artist
+            text_color: 0xFFFFFF
