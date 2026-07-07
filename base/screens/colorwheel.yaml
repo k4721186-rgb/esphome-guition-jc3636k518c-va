@@ -1,4 +1,4 @@
-# Farbsteuerungs-Screen für LVGL 9 (Sicher vor API- und ID-Fehlern)
+# Farbsteuerungs-Screen für LVGL 9 (Sicher vor unvollständigen Typen)
 globals:
   - id: g_cw_hue
     type: uint16_t
@@ -10,7 +10,6 @@ globals:
     initial_value: '0'
 
 script:
-  # PLATZHALTER-SKRIPT: Verhindert den "Couldn't find ID"-Fehler im Intervall-Block
   - id: cw_render
     then:
       - lambda: |-
@@ -29,11 +28,11 @@ script:
               sprintf(buf, "[%d, 100]", id(g_cw_hue));
               return std::string(buf);
             brightness_pct: !lambda |-
-              auto* sl = id(brightness_slider).obj;
-              return std::string(std::to_string(lv_slider_get_value(sl)));
+              // Typen-Casting entfernt, da .obj direkt den passenden Zeiger liefert
+              return std::to_string(lv_slider_get_value(id(brightness_slider).obj));
             color_temp_kelvin: !lambda |-
-              auto* sl = id(temp_slider).obj;
-              return std::string(std::to_string(lv_slider_get_value(sl)));
+              // Typen-Casting entfernt, da .obj direkt den passenden Zeiger liefert
+              return std::to_string(lv_slider_get_value(id(temp_slider).obj));
 
 interval:
   - interval: 50ms
@@ -46,8 +45,7 @@ interval:
                 id(g_knob_capture) = true; 
                 id(g_cw_lasttap) = id(g_tap_seq);
             - lvgl.page.show: { id: page_colorwheel, animation: move_left, time: 250ms }
-            - script.execute:
-                id: cw_render
+            - script.execute: cw_render
 
   - interval: 80ms
     then:
@@ -60,10 +58,8 @@ interval:
                 if (new_hue >= 360) new_hue -= 360;
                 if (new_hue < 0) new_hue += 360;
                 id(g_cw_hue) = (uint16_t)new_hue;
-            - script.execute:
-                id: cw_render
-            - script.execute:
-                id: cw_commit
+            - script.execute: cw_render
+            - script.execute: cw_commit
 
       - if:
           condition: { lambda: 'return id(g_base)==10 && id(g_tap_seq) != id(g_cw_lasttap);' }
@@ -74,13 +70,11 @@ interval:
                 data:
                   entity_id: light.wohnung_bunt
 
-# Das visuelle Layout in LVGL
 lvgl:
   pages:
     - id: page_colorwheel
       bg_color: 0x000000
       widgets:
-        # --- OBERE SÄULE: HELLIGKEIT ---
         - slider:
             id: brightness_slider
             align: CENTER
@@ -107,7 +101,6 @@ lvgl:
             text_font: font_artist
             text_color: 0x888888
 
-        # --- UNTERE SÄULE: FARBTEMPERATUR ---
         - slider:
             id: temp_slider
             align: CENTER
