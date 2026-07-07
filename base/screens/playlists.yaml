@@ -45,7 +45,6 @@ script:
   - id: pl_render
     then:
       - lambda: |-
-          // Pfeil-Operator -> nutzen, um das LVGL Object-Handle im neuen Framework anzusprechen
           auto* roller_obj = id(my_playlist_roller)->obj;
           int idx = id(g_pl_index);
           lv_roller_set_selected(roller_obj, idx, LV_ANIM_ON);
@@ -59,4 +58,53 @@ interval:
           then:
             - lambda: |-
                 id(g_nav_req) = false; 
-                id(g_knob_
+                id(g_knob_capture) = true; 
+                id(g_pl_lasttap) = id(g_tap_seq);
+                id(g_base) = 4; 
+            - lvgl.page.show: { id: page_playlists, animation: move_left, time: 250ms }
+            - script.execute: pl_render
+
+  # Knob-Steuerung: Drehen scrollt die Walze weiter
+  - interval: 120ms
+    then:
+      - if:
+          condition: { lambda: 'return id(g_base)==4 && id(g_knob_delta) != 0;' }
+          then:
+            - lambda: |-
+                int next_idx = id(g_pl_index) + id(g_knob_delta);
+                id(g_knob_delta) = 0;
+
+                if (next_idx < 0) next_idx = 0;
+                if (next_idx > id(g_pl_max)) next_idx = id(g_pl_max);
+
+                id(g_pl_index) = next_idx;
+            - script.execute: pl_render
+
+      # Drücken des Knobs: Startet Musik
+      - if:
+          condition: { lambda: 'return id(g_base)==4 && id(g_tap_seq) != id(g_pl_lasttap);' }
+          then:
+            - lambda: 'id(g_pl_lasttap) = id(g_tap_seq);'
+            - script.execute: pl_commit
+
+# Das visuelle Layout in LVGL
+lvgl:
+  pages:
+    - id: page_playlists
+      bg_color: 0x0B0F19
+      widgets:
+        - roller:
+            id: my_playlist_roller
+            align: CENTER
+            width: 220
+            visible_row_count: 3 
+            options:
+              - "Top Hits 2021"
+              - "Top Hits 2022"
+              - "Top Hits 2023"
+              - "Top Hits 2024"
+              - "Top Tracks 2025"
+              - "High Quality"
+              - "Energia"
+              - "Gute-Laune-Mix"
+              - "500 Random"
