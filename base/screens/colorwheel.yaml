@@ -56,13 +56,12 @@ interval:
                 id(g_knob_capture) = true; 
                 id(g_cw_lasttap) = id(g_tap_seq);
                 
-                // Wir holen die Page und erzeugen das Farbrad direkt über reines C++
                 auto* page_obj = (lv_obj_t*) id(page_colorwheel).get_obj();
                 if (id(g_my_colorwheel_ptr) == nullptr) {
                     auto* cw = lv_colorwheel_create(page_obj, true);
                     lv_obj_set_size(cw, 360, 360);
                     lv_obj_align(cw, LV_ALIGN_CENTER, 0, 0);
-                    lv_obj_move_background(cw); // Schiebt es hinter die Slider
+                    lv_obj_move_background(cw); 
                     id(g_my_colorwheel_ptr) = (void*)cw;
                 }
             - lvgl.page.show: { id: page_colorwheel, animation: move_left, time: 250ms }
@@ -91,7 +90,7 @@ interval:
                 data:
                   entity_id: light.wohnung_bunt
 
-# Das visuelle Layout in LVGL (Nackt, damit der YAML-Parser nichts bemängeln kann)
+# Das visuelle Layout in LVGL
 lvgl:
   pages:
     - id: page_colorwheel
@@ -113,7 +112,8 @@ lvgl:
               bg_color: 0xFFFFFF 
             knob:
               bg_color: 0xEEEEEE
-            on_value_changed:
+            # KORREKTUR: on_value statt on_value_changed
+            on_value:
               - script.execute: cw_commit
 
         - label:
@@ -140,7 +140,8 @@ lvgl:
               bg_color: 0xD0E0FF 
             knob:
               bg_color: 0xFFFFFF
-            on_value_changed:
+            # KORREKTUR: on_value statt on_value_changed
+            on_value:
               - script.execute: cw_commit
 
         - label:
