@@ -2561,13 +2561,6 @@ interval:
                 id: pl_commit
     startup_delay: 0s
 
-# =========================================================================
-# NÄCHSTER HAUPTBEREICH (Steht bereits so in deiner core.yaml)
-# =========================================================================
-lvgl:
-  buffer_size: 24%
-
-
 lvgl:
   # A <25% buffer lands in FAST internal RAM (instead of slow PSRAM at the default 100%)
   buffer_size: 24%
