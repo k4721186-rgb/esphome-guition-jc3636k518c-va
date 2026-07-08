@@ -20,19 +20,12 @@ globals:
 script:
   - id: cw_render
     then:
+      - lvgl.arc.update:
+          id: cw_arc
+          value: !lambda "return id(g_cw_hue);"
       - lambda: |-
-          // Vorwärtsdeklaration für den C++ Compiler, damit er nicht meckert
-          struct _lv_obj_t;
-          typedef struct _lv_obj_t lv_obj_t;
-          
-          // Zugriff über die offizielle ESPHome-Methode
-          if (id(cw_arc) != nullptr) {
-            auto* arc_obj = id(cw_arc)->get_obj();
-            
-            // Verwendet die interne ESPHome-Zuweisung um den C-Befehl zu umgehen
-            id(cw_arc)->set_value(id(g_cw_hue));
-            ESP_LOGD("colorwheel", "Farbton aktualisiert: %d°", id(g_cw_hue));
-          }
+          ESP_LOGD("colorwheel", "Farbton auf Display aktualisiert: %d°", id(g_cw_hue));
+
   - id: cw_commit
     mode: restart
     then:
@@ -41,7 +34,6 @@ script:
           service: light.turn_on
           data:
             entity_id: light.wohnung_bunt
-            # Verwandelt das Array in einen sauberen String, den ESPHome fehlerfrei schluckt:
             hs_color: !lambda |-
               int ha_hue = (int)id(g_cw_hue) + 90;
               if (ha_hue >= 360) ha_hue -= 360;
@@ -71,7 +63,6 @@ interval:
           condition: { lambda: 'return id(g_base)==3 && id(g_knob_delta) != 0;' }
           then:
             - lambda: |-
-                // Drehen am Rad verändert den Farbton im 360-Grad-Kreis
                 int16_t new_hue = (int16_t)id(g_cw_hue) + (id(g_knob_delta) * 6);
                 id(g_knob_delta) = 0;
                 if (new_hue >= 360) new_hue -= 360;
@@ -92,36 +83,31 @@ interval:
 lvgl:
   pages:
     - id: page_colorwheel
-      bg_color: 0x05070B # Ultra-Deep Black für maximalen Kontrast der LEDs
+      bg_color: 0x05070B 
       widgets:
-        # --- DAS RUNDE, FÜLLENDE REGENBOGEN-FARBRAD ---
         - arc:
             id: cw_arc
             align: CENTER
             x: 0
             y: -15  
-            width: 260   # Nutzt fast das gesamte 360x360 Display aus
+            width: 260   
             height: 260  
             min_value: 0
             max_value: 360
             value: 0
             start_angle: 0
             end_angle: 360
-            line_width: 24 # Richtig schön breiter, fetter Ring
-            bg_color: 0x111827 # Dunkler Untergrund für nicht aktive Segmente
-            
-            # Farbverlauf-Konfiguration für echtes Regenbogen-Feeling
-            grad_color: 0xFF0000 
+            line_width: 24 
+            bg_color: 0x111827 
+            bg_grad_color: 0xFF0000 
             indicator:
               bg_color: 0x00FF00 
-              grad_color: 0x0000FF 
-            
+              bg_grad_color: 0x0000FF 
             knob:
-              bg_color: 0xFFFFFF # Markanter, weißer Auswahl-Knopf
+              bg_color: 0xFFFFFF 
               width: 28
               height: 28
 
-        # --- HELLIGKEITS-LABEL & SLIDER ---
         - label:
             align: CENTER
             x: 0           
@@ -141,7 +127,7 @@ lvgl:
             value: 80        
             bg_color: 0x1E293B  
             indicator:
-              bg_color: 0x38BDF8 # Schickes Cyan für den Helligkeitsbalken
+              bg_color: 0x38BDF8 
             knob:
               bg_color: 0xFFFFFF 
               width: 16
