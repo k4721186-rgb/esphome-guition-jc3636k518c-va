@@ -144,40 +144,39 @@ esphome:
     - priority: 600
       then:
         - lambda: |-
-          std::string s = "${screen_order}";
-          size_t pos = 0;
-          while (true) {
-            size_t comma = s.find(',', pos);
-            std::string tok = (comma == std::string::npos) ? s.substr(pos) : s.substr(pos, comma - pos);
-            while (!tok.empty() && tok.front() == ' ') tok.erase(tok.begin());
-            while (!tok.empty() && tok.back() == ' ') tok.pop_back();
-            int id = -1;
-            if (tok == "clock") id = 0;
-            else if (tok == "player") id = 1;
-            else if (tok == "timer") id = 2;
-            else if (tok == "colorwheel") id = 3;  // Überschreibt "cars"
-            else if (tok == "playlists") id = 4;   // Überschreibt "space"
-            else if (tok == "weather") id = 5;
-            else if (tok == "demo") id = 6;
-            else if (tok == "thermostat") id = 7;
-            else if (tok == "sensors") id = 8;
-            else if (tok == "snake") id = 9;
+            std::string s = "${screen_order}";
+            size_t pos = 0;
+            while (true) {
+              size_t comma = s.find(',', pos);
+              std::string tok = (comma == std::string::npos) ? s.substr(pos) : s.substr(pos, comma - pos);
+              while (!tok.empty() && tok.front() == ' ') tok.erase(tok.begin());
+              while (!tok.empty() && tok.back() == ' ') tok.pop_back();
+              int id = -1;
+              if (tok == "clock") id = 0;
+              else if (tok == "player") id = 1;
+              else if (tok == "timer") id = 2;
+              else if (tok == "colorwheel") id = 3;  // Überschreibt "cars"
+              else if (tok == "playlists") id = 4;   // Überschreibt "space"
+              else if (tok == "weather") id = 5;
+              else if (tok == "demo") id = 6;
+              else if (tok == "thermostat") id = 7;
+              else if (tok == "sensors") id = 8;
+              else if (tok == "snake") id = 9;
 
-            if (id >= 0 && id < 16 && id(g_present)[id]) id(g_order)[id(g_order_n)++] = id;
-            if (comma == std::string::npos) break;
-            pos = comma + 1;
-          }
-          if (id(g_order_n) == 0) id(g_order)[id(g_order_n)++] = 0;
+              if (id >= 0 && id < 16 && id(g_present)[id]) id(g_order)[id(g_order_n)++] = id;
+              if (comma == std::string::npos) break;
+              pos = comma + 1;
+            }
+            if (id(g_order_n) == 0) id(g_order)[id(g_order_n)++] = 0;
 
-  // safety: keep the clock
-  - priority: -50
-    then:
-      - if:
-          condition: { lambda: 'return id(g_factory_reset);' }
-          then:
-            - delay: 2s
-            - lambda: 'id(g_factory_reset) = false;'
-
+    // safety: keep the clock
+    - priority: -50
+      then:
+        - if:
+            condition: { lambda: 'return id(g_factory_reset);' }
+            then:
+              - delay: 2s
+              - lambda: 'id(g_factory_reset) = false;
 then:
         - lambda: |-
             std::string s = "${screen_order}";
