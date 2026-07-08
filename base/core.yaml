@@ -72,12 +72,11 @@ substitutions:
 esphome:
   name: ${name}
   friendly_name: ${friendly_name}
-  includes:
-    - lvgl.h
   platformio_options:
     board_build.flash_mode: dio
     board_build.f_flash: 80000000L
     board_build.f_cpu: 240000000L
+    build_flags: -D LV_CONF_INCLUDE_SIMPLE
   on_boot:
     - priority: 800
       then:
