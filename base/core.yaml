@@ -76,7 +76,8 @@ esphome:
     board_build.flash_mode: dio
     board_build.f_flash: 80000000L
     board_build.f_cpu: 240000000L
-    build_flags: -D LV_CONF_INCLUDE_SIMPLE
+    build_flags: -include lvgl.h
+
   on_boot:
     - priority: 800
       then:
