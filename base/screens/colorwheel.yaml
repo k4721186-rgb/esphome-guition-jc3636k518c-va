@@ -1,4 +1,4 @@
-# Farbsteuerungs-Screen für LVGL 9 mit echtem, runden Farbrad
+# Farbsteuerungs-Screen für LVGL 9 mit echtem, runden Farbrad (Riesen-Regenbogen-Edition)
 globals:
   - id: g_cw_hue
     type: uint16_t
@@ -20,9 +20,12 @@ globals:
 script:
   - id: cw_render
     then:
+      # Verwendet die native ESPHome-Action, um die C++ Header-Blockade sauber zu umgehen
       - lvgl.arc.update:
           id: cw_arc
           value: !lambda "return id(g_cw_hue);"
+      - lambda: |-
+          ESP_LOGD("colorwheel", "Farbton auf Display aktualisiert: %d°", id(g_cw_hue));
 
   - id: cw_commit
     mode: restart
@@ -32,10 +35,13 @@ script:
           service: light.turn_on
           data:
             entity_id: light.wohnung_bunt
-            hs_color: !lambda |-
-              char buf[32];
-              sprintf(buf, "[%d, 100]", id(g_cw_hue));
-              return std::string(buf);
+            # Korrigiert das Zusammenspiel der Winkel und gibt eine echte Liste an HA weiter
+            hs_color:
+              - !lambda |-
+                  int ha_hue = (int)id(g_cw_hue) + 90;
+                  if (ha_hue >= 360) ha_hue -= 360;
+                  return ha_hue;
+              - 100
             brightness_pct: !lambda |-
               return std::to_string(id(g_cw_brightness));
             color_temp_kelvin: !lambda |-
@@ -82,51 +88,60 @@ interval:
 lvgl:
   pages:
     - id: page_colorwheel
-      bg_color: 0x0A0F19 # Ein edles, tiefes Dunkelblau als Hintergrund
+      bg_color: 0x05070B # Ultra-Deep Black für maximalen Kontrast der LEDs
       widgets:
-        # --- DAS RUNDE 360° FARBRAD (ARC) ---
+        # --- DAS RUNDE, FÜLLENDE REGENBOGEN-FARBRAD ---
         - arc:
             id: cw_arc
             align: CENTER
             x: 0
-            y: -25  # Nach oben verschoben, um unten Platz für den Regler zu machen
-            width: 140
-            height: 140
+            y: -15  
+            width: 260   # Nutzt fast das gesamte 360x360 Display aus
+            height: 260  
             min_value: 0
             max_value: 360
             value: 0
             start_angle: 0
             end_angle: 360
-            line_width: 12
-            bg_color: 0x1E293B # Moderner, dunkelgrauer Ring im Ruhezustand
+            line_width: 24 # Richtig schön breiter, fetter Ring
+            bg_color: 0x111827 # Dunkler Untergrund für nicht aktive Segmente
+            
+            # Farbverlauf-Konfiguration für echtes Regenbogen-Feeling
+            grad_color: 0xFF0000 
             indicator:
-              bg_color: 0x38BDF8 # Schönes Cyan, das optisch mitwandert
+              bg_color: 0x00FF00 
+              grad_color: 0x0000FF 
+            
             knob:
-              bg_color: 0xFFFFFF # Weißer, gut sichtbarer Positionsknopf
+              bg_color: 0xFFFFFF # Markanter, weißer Auswahl-Knopf
+              width: 28
+              height: 28
 
-        # --- TEXT & SLIDER FÜR HELLIGKEIT ---
+        # --- HELLIGKEITS-LABEL & SLIDER ---
         - label:
             align: CENTER
             x: 0           
-            y: 55 # Direkt über dem Schieberegler platziert
+            y: 85 
             text: "Helligkeit"
-            text_color: 0x94A3B8 # Dezent lesbares Graublau
+            text_color: 0x64748B
 
         - slider:
             id: brightness_slider
             align: CENTER
             x: 0            
-            y: 75           
-            width: 160       
-            height: 12 # Angenehme Stärke für das UI
+            y: 110           
+            width: 140       
+            height: 10 
             min_value: 1
             max_value: 100
             value: 80        
             bg_color: 0x1E293B  
             indicator:
-              bg_color: 0xE2E8F0 # Cleaner, heller Füllbalken
+              bg_color: 0x38BDF8 # Schickes Cyan für den Helligkeitsbalken
             knob:
-              bg_color: 0xFFFFFF # Kontrastreicher Regelknopf
+              bg_color: 0xFFFFFF 
+              width: 16
+              height: 16
             on_value:
               then:
                 - lambda: 'id(g_cw_brightness) = (int)x;'
