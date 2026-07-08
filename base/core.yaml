@@ -242,13 +242,13 @@ esphome:
             }
             id(g_tz_posix) = tz;
             if (!tz.empty()) { setenv("TZ", tz.c_str(), 1); tzset(); }
-      - script.execute: night_apply    
-      - script.execute: disp_apply     
-      - script.execute: settings_build 
-      - lvgl.label.update: { id: tile1_ic, text: !lambda 'return id(g_tile1_glyph);' }   
-      - lvgl.label.update: { id: tile2_ic, text: !lambda 'return id(g_tile2_glyph);' }
-      - lvgl.label.update: { id: tile3_ic, text: !lambda 'return id(g_tile3_glyph);' }
-      - lvgl.label.update: { id: tile4_ic, text: !lambda 'return id(g_tile4_glyph);' }
+    - script.execute: night_apply    
+    - script.execute: disp_apply     
+    - script.execute: settings_build 
+    - lvgl.label.update: { id: tile1_ic, text: !lambda 'return id(g_tile1_glyph);' }   
+    - lvgl.label.update: { id: tile2_ic, text: !lambda 'return id(g_tile2_glyph);' }
+    - lvgl.label.update: { id: tile3_ic, text: !lambda 'return id(g_tile3_glyph);' }
+    - lvgl.label.update: { id: tile4_ic, text: !lambda 'return id(g_tile4_glyph);' }
 
 
 esp32:
