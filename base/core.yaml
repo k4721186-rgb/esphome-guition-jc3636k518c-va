@@ -175,7 +175,7 @@ esphome:
       then:
         - if:
             condition: { lambda: 'return id(g_factory_reset);' }
-           then:
+            then:
               - delay: 2s
               - lambda: 'id(g_factory_reset) = false;'
 
