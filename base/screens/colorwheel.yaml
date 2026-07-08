@@ -15,7 +15,6 @@ script:
       - lvgl.slider.update:
           id: cw_bright_slider
           value: !lambda "return id(g_cw_brightness);"
-      # Korrigierte, native LVGL-Action für die Prozentanzeige:
       - lvgl.label.update:
           id: cw_bright_label
           text: !lambda |-
@@ -25,8 +24,8 @@ script:
     mode: restart
     then:
       - delay: 150ms
-      - homeassistant.service:
-          service: light.turn_on
+      - homeassistant.action:
+          action: light.turn_on
           data:
             entity_id: light.wohnung_bunt
             brightness_pct: !lambda "return std::to_string(id(g_cw_brightness));"
@@ -46,7 +45,7 @@ interval:
             - lvgl.page.show: { id: page_colorwheel, animation: move_left, time: 250ms }
             - script.execute: cw_render
 
-  # 2. Drehknopf steuert jetzt direkt die Helligkeit
+  # 2. Drehknopf steuert die Helligkeit
   - interval: 60ms
     then:
       - if:
@@ -66,8 +65,8 @@ interval:
           condition: { lambda: 'return id(g_base)==3 && id(g_tap_seq) != id(g_cw_lasttap);' }
           then:
             - lambda: 'id(g_cw_lasttap) = id(g_tap_seq);'
-            - homeassistant.service:
-                service: light.toggle
+            - homeassistant.action:
+                action: light.toggle
                 data:
                   entity_id: light.wohnung_bunt
 
@@ -117,9 +116,11 @@ lvgl:
             bg_color: 0xE0F2FE
             radius: 8
             on_click:
-              - homeassistant.service:
-                  service: light.turn_on
-                  data: { entity_id: light.wohnung_bunt, color_temp_kelvin: '6500' }
+              - homeassistant.action:
+                  action: light.turn_on
+                  data:
+                    entity_id: light.wohnung_bunt
+                    color_temp_kelvin: 6500
         - button:
             align: CENTER
             x: 0
@@ -129,9 +130,11 @@ lvgl:
             bg_color: 0xFFFBEB
             radius: 8
             on_click:
-              - homeassistant.service:
-                  service: light.turn_on
-                  data: { entity_id: light.wohnung_bunt, color_temp_kelvin: '4000' }
+              - homeassistant.action:
+                  action: light.turn_on
+                  data:
+                    entity_id: light.wohnung_bunt
+                    color_temp_kelvin: 4000
         - button:
             align: CENTER
             x: 75
@@ -141,9 +144,12 @@ lvgl:
             bg_color: 0xFFEDD5
             radius: 8
             on_click:
-              - homeassistant.service:
-                  service: light.turn_on
-                  data: { entity_id: light.wohnung_bunt, color_temp_kelvin: '2700' }
+              - homeassistant.action:
+                  action: light.turn_on
+                  data:
+                    entity_id: light.wohnung_bunt
+                    color_temp_kelvin: 2700
+
         # Zeile 2: Primärfarben (Rot, Gelb, Orange)
         - button:
             align: CENTER
@@ -154,11 +160,11 @@ lvgl:
             bg_color: 0xEF4444
             radius: 8
             on_click:
-              - homeassistant.service:
-                  service: light.turn_on
-                  data: 
+              - homeassistant.action:
+                  action: light.turn_on
+                  data:
                     entity_id: light.wohnung_bunt
-                    rgb_color: "[255, 0, 0]"
+                    rgb_color: [255, 0, 0]
         - button:
             align: CENTER
             x: 0
@@ -168,11 +174,11 @@ lvgl:
             bg_color: 0xFBBF24
             radius: 8
             on_click:
-              - homeassistant.service:
-                  service: light.turn_on
-                  data: 
+              - homeassistant.action:
+                  action: light.turn_on
+                  data:
                     entity_id: light.wohnung_bunt
-                    rgb_color: "[255, 230, 0]"
+                    rgb_color: [255, 230, 0]
         - button:
             align: CENTER
             x: 75
@@ -182,11 +188,11 @@ lvgl:
             bg_color: 0xF97316
             radius: 8
             on_click:
-              - homeassistant.service:
-                  service: light.turn_on
-                  data: 
+              - homeassistant.action:
+                  action: light.turn_on
+                  data:
                     entity_id: light.wohnung_bunt
-                    rgb_color: "[255, 100, 0]"
+                    rgb_color: [255, 100, 0]
 
         # Zeile 3: Buntfarben (Grün, Blau, Lila)
         - button:
@@ -198,11 +204,11 @@ lvgl:
             bg_color: 0x22C55E
             radius: 8
             on_click:
-              - homeassistant.service:
-                  service: light.turn_on
-                  data: 
+              - homeassistant.action:
+                  action: light.turn_on
+                  data:
                     entity_id: light.wohnung_bunt
-                    rgb_color: "[0, 255, 0]"
+                    rgb_color: [0, 255, 0]
         - button:
             align: CENTER
             x: 0
@@ -212,11 +218,11 @@ lvgl:
             bg_color: 0x3B82F6
             radius: 8
             on_click:
-              - homeassistant.service:
-                  service: light.turn_on
-                  data: 
+              - homeassistant.action:
+                  action: light.turn_on
+                  data:
                     entity_id: light.wohnung_bunt
-                    rgb_color: "[0, 0, 255]"
+                    rgb_color: [0, 0, 255]
         - button:
             align: CENTER
             x: 75
@@ -226,8 +232,8 @@ lvgl:
             bg_color: 0xA855F7
             radius: 8
             on_click:
-              - homeassistant.service:
-                  service: light.turn_on
-                  data: 
+              - homeassistant.action:
+                  action: light.turn_on
+                  data:
                     entity_id: light.wohnung_bunt
-                    rgb_color: "[160, 0, 255]"
+                    rgb_color: [160, 0, 255]
