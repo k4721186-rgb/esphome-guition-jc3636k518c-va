@@ -68,28 +68,20 @@ substitutions:
   glance6_name: "Heizung kleines Zimmer"
   glance6_icon: "flash"
 
-  # Carousel order, left to right. Reorder/remove names freely; screens you did not
-  # include in "files:" below are skipped automatically.
-  screen_order: "clock,player,timer,thermostat,weather, Sensors,cars,space,snake,demo"
+  # Carousel order, left to right. Farbrad (cars) sitzt jetzt direkt hinter dem Timer!
+  screen_order: "clock,player,timer,cars,thermostat,weather,sensors"
 
 packages:
   core:
     url: https://github.com/k4721186-rgb/esphome-guition-jc3636k518c-va
     ref: main
-    # Pick your screens here: comment out a base/screens/*.yaml line to drop that screen
-    # from the firmware. Only the clock + controls + settings live in base/core.yaml
-    # (always on); everything below is optional.
     files:
       - base/core.yaml
-      - base/screens/player.yaml       # optional: music player (album art + transport)
+      - base/screens/mediaplayer_adv.yaml 
       - base/screens/playlists.yaml
-      - base/screens/timer.yaml        # optional: timer screen in the carousel (voice timers/alarm stay regardless)
-     # - base/screens/cool-cars.yaml    # optional: Cool Cars game
-    #  - base/screens/space-wars.yaml   # optional: Space Wars game
-   #   - base/screens/snake.yaml        # optional: Snake game (knob steers)
-      - base/screens/weather.yaml      # optional: weather (today + 7-day, knob scrolls days)
-      - base/screens/colorwheel.yaml
-      - base/screens/thermostat.yaml   # optional: thermostat (climate.* entity; knob sets target, tap on/off)
-      - base/screens/sensors.yaml      # optional: sensors glance (1-6 HA entities, knob cycles)
-     # - base/screens/demo.yaml         # optional: commented example screen (TAP ME!) + Widgets settings
-    refresh: 0s        # always pull the latest beta (set to e.g. 1d once it stabilizes) to this file (both must be local paths).
+      - base/screens/timer.yaml        
+      - base/screens/weather.yaml      
+      - base/screens/colorwheel.yaml   
+      - base/screens/thermostat.yaml   
+      - base/screens/sensors.yaml      
+    refresh: 0s                        
