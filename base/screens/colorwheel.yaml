@@ -1,3 +1,6 @@
+esphome:
+  includes:
+    - esphome/components/lvgl/lvgl_hal.h
 # Farbsteuerungs-Screen für LVGL 9 mit echtem, runden Farbrad
 globals:
   - id: g_cw_hue
