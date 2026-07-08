@@ -12,7 +12,6 @@ globals:
     type: float
     restore_value: no
     initial_value: '0.0'
-  # --- HIER SIND DIE FEHLENDEN TEXT-IDS ---
   - id: g_player_album_art_url
     type: std::string
     restore_value: no
@@ -21,7 +20,6 @@ globals:
 script:
   - id: mp_render
     then:
-      # Erzwingt das Neuzeichnen des Fortschrittsrings über die native ESPHome-Action
       - lvgl.arc.update:
           id: mp_progress_arc
           value: !lambda |-
@@ -31,7 +29,7 @@ script:
             return 0;
 
 interval:
-  # 1. Navigation und Aktivierung des Screens (Modus 1)
+  # 1. Navigation und Aktivierung des Screens
   - interval: 50ms
     then:
       - if:
@@ -45,20 +43,19 @@ interval:
             - lvgl.page.show: { id: page_mediaplayer_adv, animation: move_left, time: 250ms }
             - script.execute: mp_render
 
-  # Reißt den Fortschrittsbalken jede Sekunde mit, wenn der Screen aktiv ist
+  # Reißt den Fortschrittsbalken mit
   - interval: 1s
     then:
       - if:
           condition: { lambda: 'return id(g_base)==1;' }
           then:
-            # Simuliert das Voranschreiten der Zeit lokal, falls HA nicht jede Sekunde funkt
             - lambda: |-
                 if (id(g_mp_position) < id(g_mp_duration)) {
                   id(g_mp_position) += 1.0;
                 }
             - script.execute: mp_render
 
-  # 2. Knob-Drehung steuert die Lautstärke deines Denon AVR
+  # 2. Knob-Drehung steuert die Lautstärke
   - interval: 80ms
     then:
       - if:
@@ -84,7 +81,7 @@ interval:
 lvgl:
   pages:
     - id: page_mediaplayer_adv
-      bg_color: 0x0F172A # Edles Schiefer-Dunkelgrau
+      bg_color: 0x0F172A 
       widgets:
 
         # --- DER RADIALE PROGRESS-RING ---
@@ -117,8 +114,8 @@ lvgl:
             y: -20
             width: 140
             height: 140
-            src: !lambda |-
-              return "${ha_base_url}" + id(g_player_album_art_url); 
+            # Greift jetzt sauber auf die vom Core bereitgestellte Bild-ID zu
+            src: mp_album_art_source
 
         # --- SONGTITEL ---
         - label:
@@ -141,4 +138,3 @@ lvgl:
             text: "HEOS / Spotify"
             text_color: 0x94A3B8 
             long_mode: DOT
-
