@@ -110,7 +110,7 @@ lvgl:
             value: 0
 
         # --- DAS KREISRUNDE ALBUM-COVER (VINYL STYLING) ---
-        - img:
+        - image:
             id: mp_album_art
             align: CENTER
             x: 0
