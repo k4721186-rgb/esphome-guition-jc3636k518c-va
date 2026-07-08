@@ -141,6 +141,7 @@ esphome:
     - priority: 595
       then:
         - lambda: 'id(g_set_labels) += "\nSystem"; id(g_set_items)[id(g_set_n)++] = 15;' # always last
+
     - priority: 600
       then:
         - lambda: |-
@@ -170,86 +171,87 @@ esphome:
             if (id(g_order_n) == 0) id(g_order)[id(g_order_n)++] = 0;
 
     // safety: keep the clock
-      - priority: -50
-        then:
-          - if:
-              condition: { lambda: 'return id(g_factory_reset);' }
-              then:
-                - delay: 2s
-                - lambda: 'id(g_factory_reset) = false;'
+    - priority: -50
+      then:
+        - if:
+            condition: { lambda: 'return id(g_factory_reset);' }
+            then:
+              - delay: 2s
+              - lambda: 'id(g_factory_reset) = false;'
 
     - priority: -100
       then:
         - script.execute: haptic_boot_splash
         - lambda: |-
-          // The device has no IANA tz database, so the clock needs a POSIX TZ string. To keep the
-          // `timezone` substitution friendly, map common IANA names -> POSIX here and force the
-          // result into the environment ourselves (on some builds the homeassistant time platform
-          // never applies the zone and the clock sticks on UTC). An explicit POSIX string is used
-          // as-is; an IANA name not in the table falls back to whatever the time platform resolved.
-          // The 1s interval re-applies g_tz_posix so a runtime reset to UTC can't stick.
-          static const char* TZMAP[][2] = {
-            {"Europe/Warsaw","CET-1CEST,M3.5.0,M10.5.0/3"},
-            {"Europe/London","GMT0BST,M3.5.0/1,M10.5.0"},
-            {"Europe/Berlin","CET-1CEST,M3.5.0,M10.5.0/3"},
-            {"Europe/Paris","CET-1CEST,M3.5.0,M10.5.0/3"},
-            {"Europe/Madrid","CET-1CEST,M3.5.0,M10.5.0/3"},
-            {"Europe/Rome","CET-1CEST,M3.5.0,M10.5.0/3"},
-            {"Europe/Amsterdam","CET-1CEST,M3.5.0,M10.5.0/3"},
-            {"Europe/Brussels","CET-1CEST,M3.5.0,M10.5.0/3"},
-            {"Europe/Vienna","CET-1CEST,M3.5.0,M10.5.0/3"},
-            {"Europe/Prague","CET-1CEST,M3.5.0,M10.5.0/3"},
-            {"Europe/Zurich","CET-1CEST,M3.5.0,M10.5.0/3"},
-            {"Europe/Copenhagen","CET-1CEST,M3.5.0,M10.5.0/3"},
-            {"Europe/Stockholm","CET-1CEST,M3.5.0,M10.5.0/3"},
-            {"Europe/Oslo","CET-1CEST,M3.5.0,M10.5.0/3"},
-            {"Europe/Budapest","CET-1CEST,M3.5.0,M10.5.0/3"},
-            {"Europe/Lisbon","WET0WEST,M3.5.0/1,M10.5.0"},
-            {"Europe/Athens","EET-2EEST,M3.5.0/3,M10.5.0/4"},
-            {"Europe/Helsinki","EET-2EEST,M3.5.0/3,M10.5.0/4"},
-            {"Europe/Bucharest","EET-2EEST,M3.5.0/3,M10.5.0/4"},
-            {"Europe/Sofia","EET-2EEST,M3.5.0/3,M10.5.0/4"},
-            {"Europe/Kyiv","EET-2EEST,M3.5.0/3,M10.5.0/4"},
-            {"Europe/Moscow","MSK-3"},
-            {"Europe/Istanbul","<+03>-3"},
-            {"Europe/Dublin","IST-1GMT0,M10.5.0,M3.5.0/1"},
-            {"America/New_York","EST5EDT,M3.2.0,M11.1.0"},
-            {"America/Chicago","CST6CDT,M3.2.0,M11.1.0"},
-            {"America/Denver","MST7MDT,M3.2.0,M11.1.0"},
-            {"America/Los_Angeles","PST8PDT,M3.2.0,M11.1.0"},
-            {"America/Phoenix","MST7"},
-            {"America/Toronto","EST5EDT,M3.2.0,M11.1.0"},
-            {"America/Sao_Paulo","<-03>3"},
-            {"America/Mexico_City","CST6"},
-            {"Asia/Tokyo","JST-9"},
-            {"Asia/Shanghai","CST-8"},
-            {"Asia/Hong_Kong","HKT-8"},
-            {"Asia/Singapore","<+08>-8"},
-            {"Asia/Dubai","<+04>-4"},
-            {"Asia/Kolkata","IST-5:30"},
-            {"Asia/Seoul","KST-9"},
-            {"Asia/Jerusalem","IST-2IDT,M3.4.4/26,M10.5.0"},
-            {"Australia/Sydney","AEST-10AEDT,M10.1.0,M4.1.0/3"},
-            {"Australia/Perth","AWST-8"},
-            {"Pacific/Auckland","NZST-12NZDT,M9.5.0,M4.1.0/3"},
-            {"UTC","UTC0"},
-          };
-          std::string cfg = "${timezone}";
-          std::string tz = cfg;
-          bool found = false;
-          for (auto &e : TZMAP) if (cfg == e[0]) { tz = e[1]; found = true; break; }
-          if (!found && cfg.find('/') != std::string::npos) {
-            const char* en = getenv("TZ"); if (en && en[0]) tz = en;
-          }
-          id(g_tz_posix) = tz;
-          if (!tz.empty()) { setenv("TZ", tz.c_str(), 1); tzset(); }
-      - script.execute: night_apply    # brightness per g_bright / night mode
-      - script.execute: disp_apply     # show/hide weather + temp/humidity per settings
-      - script.execute: settings_build # push the dynamic settings list into the roller
-      - lvgl.label.update: { id: tile1_ic, text: !lambda 'return id(g_tile1_glyph);' }   # tiles get their icon glyph now (set at priority 760)
+            // The device has no IANA tz database, so the clock needs a POSIX TZ string. To keep the
+            // `timezone` substitution friendly, map common IANA names -> POSIX here and force the
+            // result into the environment ourselves (on some builds the homeassistant time platform
+            // never applies the zone and the clock sticks on UTC). An explicit POSIX string is used
+            // as-is; an IANA name not in the table falls back to whatever the time platform resolved.
+            // The 1s interval re-applies g_tz_posix so a runtime reset to UTC can't stick.
+            static const char* TZMAP[][2] = {
+              {"Europe/Warsaw","CET-1CEST,M3.5.0,M10.5.0/3"},
+              {"Europe/London","GMT0BST,M3.5.0/1,M10.5.0"},
+              {"Europe/Berlin","CET-1CEST,M3.5.0,M10.5.0/3"},
+              {"Europe/Paris","CET-1CEST,M3.5.0,M10.5.0/3"},
+              {"Europe/Madrid","CET-1CEST,M3.5.0,M10.5.0/3"},
+              {"Europe/Rome","CET-1CEST,M3.5.0,M10.5.0/3"},
+              {"Europe/Amsterdam","CET-1CEST,M3.5.0,M10.5.0/3"},
+              {"Europe/Brussels","CET-1CEST,M3.5.0,M10.5.0/3"},
+              {"Europe/Vienna","CET-1CEST,M3.5.0,M10.5.0/3"},
+              {"Europe/Prague","CET-1CEST,M3.5.0,M10.5.0/3"},
+              {"Europe/Zurich","CET-1CEST,M3.5.0,M10.5.0/3"},
+              {"Europe/Copenhagen","CET-1CEST,M3.5.0,M10.5.0/3"},
+              {"Europe/Stockholm","CET-1CEST,M3.5.0,M10.5.0/3"},
+              {"Europe/Oslo","CET-1CEST,M3.5.0,M10.5.0/3"},
+              {"Europe/Budapest","CET-1CEST,M3.5.0,M10.5.0/3"},
+              {"Europe/Lisbon","WET0WEST,M3.5.0/1,M10.5.0"},
+              {"Europe/Athens","EET-2EEST,M3.5.0/3,M10.5.0/4"},
+              {"Europe/Helsinki","EET-2EEST,M3.5.0/3,M10.5.0/4"},
+              {"Europe/Bucharest","EET-2EEST,M3.5.0/3,M10.5.0/4"},
+              {"Europe/Sofia","EET-2EEST,M3.5.0/3,M10.5.0/4"},
+              {"Europe/Kyiv","EET-2EEST,M3.5.0/3,M10.5.0/4"},
+              {"Europe/Moscow","MSK-3"},
+              {"Europe/Istanbul","<+03>-3"},
+              {"Europe/Dublin","IST-1GMT0,M10.5.0,M3.5.0/1"},
+              {"America/New_York","EST5EDT,M3.2.0,M11.1.0"},
+              {"America/Chicago","CST6CDT,M3.2.0,M11.1.0"},
+              {"America/Denver","MST7MDT,M3.2.0,M11.1.0"},
+              {"America/Los_Angeles","PST8PDT,M3.2.0,M11.1.0"},
+              {"America/Phoenix","MST7"},
+              {"America/Toronto","EST5EDT,M3.2.0,M11.1.0"},
+              {"America/Sao_Paulo","<-03>3"},
+              {"America/Mexico_City","CST6"},
+              {"Asia/Tokyo","JST-9"},
+              {"Asia/Shanghai","CST-8"},
+              {"Asia/Hong_Kong","HKT-8"},
+              {"Asia/Singapore","<+08>-8"},
+              {"Asia/Dubai","<+04>-4"},
+              {"Asia/Kolkata","IST-5:30"},
+              {"Asia/Seoul","KST-9"},
+              {"Asia/Jerusalem","IST-2IDT,M3.4.4/26,M10.5.0"},
+              {"Australia/Sydney","AEST-10AEDT,M10.1.0,M4.1.0/3"},
+              {"Australia/Perth","AWST-8"},
+              {"Pacific/Auckland","NZST-12NZDT,M9.5.0,M4.1.0/3"},
+              {"UTC","UTC0"},
+            };
+            std::string cfg = "${timezone}";
+            std::string tz = cfg;
+            bool found = false;
+            for (auto &e : TZMAP) if (cfg == e[0]) { tz = e[1]; found = true; break; }
+            if (!found && cfg.find('/') != std::string::npos) {
+              const char* en = getenv("TZ"); if (en && en[0]) tz = en;
+            }
+            id(g_tz_posix) = tz;
+            if (!tz.empty()) { setenv("TZ", tz.c_str(), 1); tzset(); }
+      - script.execute: night_apply    
+      - script.execute: disp_apply     
+      - script.execute: settings_build 
+      - lvgl.label.update: { id: tile1_ic, text: !lambda 'return id(g_tile1_glyph);' }   
       - lvgl.label.update: { id: tile2_ic, text: !lambda 'return id(g_tile2_glyph);' }
       - lvgl.label.update: { id: tile3_ic, text: !lambda 'return id(g_tile3_glyph);' }
       - lvgl.label.update: { id: tile4_ic, text: !lambda 'return id(g_tile4_glyph);' }
+
 
 esp32:
   board: esp32-s3-devkitc-1
