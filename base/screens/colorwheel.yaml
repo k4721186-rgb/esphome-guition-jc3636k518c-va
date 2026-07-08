@@ -20,13 +20,9 @@ globals:
 script:
   - id: cw_render
     then:
-      - lambda: |-
-          // Direkte Zuweisung über ESPHome C++ Struktur ohne rohe C-Pointer
-          if (id(cw_arc) != nullptr) {
-            id(cw_arc)->set_value(id(g_cw_hue));
-            ESP_LOGD("colorwheel", "Farbton aktualisiert: %d°", id(g_cw_hue));
-          }
-
+      - lvgl.arc.update:
+          id: cw_arc
+          value: !lambda "return id(g_cw_hue);"
 
   - id: cw_commit
     mode: restart
