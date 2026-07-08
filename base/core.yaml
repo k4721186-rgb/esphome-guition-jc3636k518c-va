@@ -168,7 +168,7 @@ esphome:
               pos = comma + 1;
             }
             if (id(g_order_n) == 0) id(g_order)[id(g_order_n)++] = 0;
-            // safety: keep the clock
+    // safety: keep the clock
     - priority: -50
       then:
         - if:
@@ -2466,71 +2466,6 @@ interval:
                       id: media_player_speaker
                       media_file: alarm_sound
                       announcement: true
-   # Seitenwechsel-Erkennung für das Farbrad (ID 3)
-  - interval: 50ms
-    then: 
-      - if: 
-          condition: { lambda: 'return id(g_nav_req) && id(g_base)==3;' }
-          then: 
-            - lambda: |-
-                id(g_nav_req) = false; id(g_knob_capture) = true; id(g_cw_lasttap) = id(g_tap_seq);
-            - lvgl.page.show: { id: page_colorwheel, animation: move_left, time: 250ms }
-            - script.execute: cw_render
-    startup_delay: 0s
-
-  # Knob-Drehung & Drücken für das Farbrad (ID 3)
-  - interval: 80ms
-    then: 
-      - if: 
-          condition: { lambda: 'return id(g_base)==3 && id(g_knob_delta) != 0;' }
-          then: 
-            - lambda: |-
-                int16_t new_hue = (int16_t)id(g_cw_hue) + (id(g_knob_delta) * 4);
-                id(g_knob_delta) = 0;
-                if (new_hue >= 360) new_hue -= 360;
-                if (new_hue < 0) new_hue += 360;
-                id(g_cw_hue) = (uint16_t)new_hue;
-            - script.execute: cw_render
-            - script.execute: cw_commit
-      - if:
-          condition: { lambda: 'return id(g_base)==3 && id(g_tap_seq) != id(g_cw_lasttap);' }
-          then:
-            - lambda: 'id(g_cw_lasttap) = id(g_tap_seq);'
-            - homeassistant.service: { service: light.toggle, data: { entity_id: light.wohnung_bunt } }
-    startup_delay: 0s
-
-  # Seitenwechsel-Erkennung für die Playlists (ID 4)
-  - interval: 50ms
-    then:
-      - if:
-          condition: { lambda: 'return id(g_nav_req) && id(g_base)==4;' }
-          then:
-            - lambda: |-
-                id(g_nav_req) = false; id(g_knob_capture) = true; id(g_pl_lasttap) = id(g_tap_seq);
-            - lvgl.page.show: { id: page_playlists, animation: move_left, time: 250ms }
-            - script.execute: pl_render
-    startup_delay: 0s
-
-  # Knob-Drehung & Drücken für die Playlists (ID 4)
-  - interval: 120ms
-    then:
-      - if:
-          condition: { lambda: 'return id(g_base)==4 && id(g_knob_delta) != 0;' }
-          then:
-            - lambda: |-
-                int next_idx = id(g_pl_index) + id(g_knob_delta);
-                id(g_knob_delta) = 0;
-                if (next_idx < 0) next_idx = 0;
-                if (next_idx > id(g_pl_max)) next_idx = id(g_pl_max);
-                id(g_pl_index) = next_idx;
-            - script.execute: pl_render
-      - if:
-          condition: { lambda: 'return id(g_base)==4 && id(g_tap_seq) != id(g_pl_lasttap);' }
-          then:
-            - lambda: 'id(g_pl_lasttap) = id(g_tap_seq);'
-            - script.execute: pl_commit
-    startup_delay: 0s
-
 lvgl:
   # A <25% buffer lands in FAST internal RAM (instead of slow PSRAM at the default 100%)
   buffer_size: 24%
