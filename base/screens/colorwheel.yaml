@@ -15,10 +15,11 @@ script:
       - lvgl.slider.update:
           id: cw_bright_slider
           value: !lambda "return id(g_cw_brightness);"
-      - label.printf:
+      # Korrigierte, native LVGL-Action für die Prozentanzeige:
+      - lvgl.label.update:
           id: cw_bright_label
-          format: "%d%%"
-          args: ["id(g_cw_brightness)"]
+          text: !lambda |-
+            return std::to_string(id(g_cw_brightness)) + "%";
 
   - id: cw_commit_brightness
     mode: restart
