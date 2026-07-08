@@ -120,7 +120,7 @@ lvgl:
                   action: light.turn_on
                   data:
                     entity_id: light.wohnung_bunt
-                    color_temp_kelvin: '6500'
+                    color_temp_kelvin: "6500"
         - button:
             align: CENTER
             x: 0
@@ -134,7 +134,7 @@ lvgl:
                   action: light.turn_on
                   data:
                     entity_id: light.wohnung_bunt
-                    color_temp_kelvin: '4000'
+                    color_temp_kelvin: "4000"
         - button:
             align: CENTER
             x: 75
@@ -148,7 +148,7 @@ lvgl:
                   action: light.turn_on
                   data:
                     entity_id: light.wohnung_bunt
-                    color_temp_kelvin: '2700'
+                    color_temp_kelvin: "2700"
 
         # Zeile 2: Primärfarben (Rot, Gelb, Orange)
         - button:
@@ -164,7 +164,7 @@ lvgl:
                   action: light.turn_on
                   data:
                     entity_id: light.wohnung_bunt
-                    rgb_color: [255, 0, 0]
+                    rgb_color: "[255, 0, 0]"
         - button:
             align: CENTER
             x: 0
@@ -178,7 +178,7 @@ lvgl:
                   action: light.turn_on
                   data:
                     entity_id: light.wohnung_bunt
-                    rgb_color: [255, 230, 0]
+                    rgb_color: "[255, 230, 0]"
         - button:
             align: CENTER
             x: 75
@@ -192,7 +192,7 @@ lvgl:
                   action: light.turn_on
                   data:
                     entity_id: light.wohnung_bunt
-                    rgb_color: [255, 100, 0]
+                    rgb_color: "[255, 100, 0]"
 
         # Zeile 3: Buntfarben (Grün, Blau, Lila)
         - button:
@@ -208,7 +208,7 @@ lvgl:
                   action: light.turn_on
                   data:
                     entity_id: light.wohnung_bunt
-                    rgb_color: [0, 255, 0]
+                    rgb_color: "[0, 255, 0]"
         - button:
             align: CENTER
             x: 0
@@ -222,7 +222,7 @@ lvgl:
                   action: light.turn_on
                   data:
                     entity_id: light.wohnung_bunt
-                    rgb_color: [0, 0, 255]
+                    rgb_color: "[0, 0, 255]"
         - button:
             align: CENTER
             x: 75
@@ -236,4 +236,4 @@ lvgl:
                   action: light.turn_on
                   data:
                     entity_id: light.wohnung_bunt
-                    rgb_color: [160, 0, 255]
+                    rgb_color: "[160, 0, 255]"
