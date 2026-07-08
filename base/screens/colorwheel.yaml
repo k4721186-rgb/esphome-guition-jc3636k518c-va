@@ -41,13 +41,11 @@ script:
           service: light.turn_on
           data:
             entity_id: light.wohnung_bunt
-            # Korrigiert das Zusammenspiel der Winkel und gibt eine echte Liste an HA weiter
-            hs_color:
-              - !lambda |-
-                  int ha_hue = (int)id(g_cw_hue) + 90;
-                  if (ha_hue >= 360) ha_hue -= 360;
-                  return ha_hue;
-              - 100
+            # Verwandelt das Array in einen sauberen String, den ESPHome fehlerfrei schluckt:
+            hs_color: !lambda |-
+              int ha_hue = (int)id(g_cw_hue) + 90;
+              if (ha_hue >= 360) ha_hue -= 360;
+              return "[" + std::to_string(ha_hue) + ", 100]";
             brightness_pct: !lambda |-
               return std::to_string(id(g_cw_brightness));
             color_temp_kelvin: !lambda |-
