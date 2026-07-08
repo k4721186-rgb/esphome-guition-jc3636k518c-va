@@ -20,13 +20,19 @@ globals:
 script:
   - id: cw_render
     then:
-      # Verwendet die native ESPHome-Action, um die C++ Header-Blockade sauber zu umgehen
-      - lvgl.arc.update:
-          id: cw_arc
-          value: !lambda "return id(g_cw_hue);"
       - lambda: |-
-          ESP_LOGD("colorwheel", "Farbton auf Display aktualisiert: %d°", id(g_cw_hue));
-
+          // Vorwärtsdeklaration für den C++ Compiler, damit er nicht meckert
+          struct _lv_obj_t;
+          typedef struct _lv_obj_t lv_obj_t;
+          
+          // Zugriff über die offizielle ESPHome-Methode
+          if (id(cw_arc) != nullptr) {
+            auto* arc_obj = id(cw_arc)->get_obj();
+            
+            // Verwendet die interne ESPHome-Zuweisung um den C-Befehl zu umgehen
+            id(cw_arc)->set_value(id(g_cw_hue));
+            ESP_LOGD("colorwheel", "Farbton aktualisiert: %d°", id(g_cw_hue));
+          }
   - id: cw_commit
     mode: restart
     then:
