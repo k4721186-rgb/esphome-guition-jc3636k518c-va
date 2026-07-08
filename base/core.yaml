@@ -138,10 +138,11 @@ esphome:
             id(g_tile2_glyph) = ic("${tile2_icon}");
             id(g_tile3_glyph) = ic("${tile3_icon}");
             id(g_tile4_glyph) = ic("${tile4_icon}");
-    - priority: 595
-      then:
-        - lambda: 'id(g_set_labels) += "\nSystem"; id(g_set_items)[id(g_set_n)++] = 15;'   # always last
-     - priority: 600
+  - priority: 595
+    then:
+      - lambda: 'id(g_set_labels) += "\nSystem"; id(g_set_items)[id(g_set_n)++] = 15;' # always last
+
+  - priority: 600
     then:
       - lambda: |-
           std::string s = "${screen_order}";
@@ -169,19 +170,23 @@ esphome:
           }
           if (id(g_order_n) == 0) id(g_order)[id(g_order_n)++] = 0;
 
-    // safety: keep the clock
-    - priority: -50
-      then:
-        - if:
-            condition: { lambda: 'return id(g_factory_reset);' }
-            then:
-              - delay: 2s
-              - lambda: 'id(g_factory_reset) = false;'
+  // safety: keep the clock
+  - priority: -50
+    then:
+      - if:
+          condition: { lambda: 'return id(g_factory_reset);' }
+          then:
+            - delay: 2s
+            - lambda: 'id(g_factory_reset) = false;'
 
-    - priority: -100
-      then:
-        - script.execute: haptic_boot_splash
-        - lambda: |-
+  - priority: -100
+    then:
+      - script.execute: haptic_boot_splash
+      - lambda: |-
+          // The device has no IANA tz database, so the clock needs a POSIX TZ string.
+          // To keep the `timezone` substitution friendly, map common IANA names -> POSIX here 
+          // and force the result into the environment ourselves (on some builds the homeassistant time component fails this).
+
 
             // The device has no IANA tz database, so the clock needs a POSIX TZ string. To keep the
             // `timezone` substitution friendly, map common IANA names -> POSIX here and force the
