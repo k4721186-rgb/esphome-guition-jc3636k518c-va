@@ -12,12 +12,23 @@ globals:
     type: float
     restore_value: no
     initial_value: '0.0'
+  # --- HIER SIND DIE FEHLENDEN TEXT-IDS ---
+  - id: g_player_album_art_url
+    type: std::string
+    restore_value: no
+    initial_value: '""'
 
 script:
   - id: mp_render
     then:
-      - lambda: |-
-          ESP_LOGD("mediaplayer_adv", "Denon AVR Player-Screen geladen");
+      # Erzwingt das Neuzeichnen des Fortschrittsrings über die native ESPHome-Action
+      - lvgl.arc.update:
+          id: mp_progress_arc
+          value: !lambda |-
+            if (id(g_mp_duration) > 0.0) {
+              return (int)((id(g_mp_position) / id(g_mp_duration)) * 100.0);
+            }
+            return 0;
 
 interval:
   # 1. Navigation und Aktivierung des Screens (Modus 1)
@@ -32,6 +43,19 @@ interval:
                 id(g_mp_lasttap) = id(g_tap_seq);
                 id(g_base) = 1; 
             - lvgl.page.show: { id: page_mediaplayer_adv, animation: move_left, time: 250ms }
+            - script.execute: mp_render
+
+  # Reißt den Fortschrittsbalken jede Sekunde mit, wenn der Screen aktiv ist
+  - interval: 1s
+    then:
+      - if:
+          condition: { lambda: 'return id(g_base)==1;' }
+          then:
+            # Simuliert das Voranschreiten der Zeit lokal, falls HA nicht jede Sekunde funkt
+            - lambda: |-
+                if (id(g_mp_position) < id(g_mp_duration)) {
+                  id(g_mp_position) += 1.0;
+                }
             - script.execute: mp_render
 
   # 2. Knob-Drehung steuert die Lautstärke deines Denon AVR
@@ -62,7 +86,7 @@ lvgl:
     - id: page_mediaplayer_adv
       bg_color: 0x0F172A # Edles Schiefer-Dunkelgrau
       widgets:
-        
+
         # --- DER RADIALE PROGRESS-RING ---
         - arc:
             id: mp_progress_arc
@@ -76,19 +100,14 @@ lvgl:
             start_angle: 0
             end_angle: 360
             line_width: 6
-            bg_color: 0x334155 # Dunkler Hintergrundring im Ruhezustand
+            bg_color: 0x334155 
             indicator:
-              bg_color: 0x10B981 # Spotify-Grün für den Fortschrittsbalken
+              bg_color: 0x10B981 
             knob:
               bg_color: 0x10B981
-              width: 0 # Klobigen Knopf verstecken für eine saubere Optik
+              width: 0 
               height: 0
-            value: !lambda |-
-              // Berechnet den prozentualen Fortschritt des Denon-Streams
-              if (id(g_mp_duration) > 0.0) {
-                return (int)((id(g_mp_position) / id(g_mp_duration)) * 100.0);
-              }
-              return 0;
+            value: 0
 
         # --- DAS KREISRUNDE ALBUM-COVER (VINYL STYLING) ---
         - img:
@@ -99,10 +118,9 @@ lvgl:
             width: 140
             height: 140
             src: !lambda |-
-              // Kombiniert Home Assistant Basis-URL und das Live-Cover des AVR
               return "${ha_base_url}" + id(g_player_album_art_url); 
 
-        # --- SONGTITEL (SCROLLT AUTOMATISCH BEI ÜBERLÄNGE) ---
+        # --- SONGTITEL ---
         - label:
             id: mp_title
             align: CENTER
@@ -111,7 +129,7 @@ lvgl:
             width: 220
             text: "Denon AVR..."
             text_color: 0xF8FAFC 
-            long_mode: SCROLL_CIRCULAR # Fließtext bei langen Songnamen
+            long_mode: SCROLL_CIRCULAR 
 
         # --- INTERPRET ---
         - label:
