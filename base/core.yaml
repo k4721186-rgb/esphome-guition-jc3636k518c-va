@@ -170,13 +170,13 @@ esphome:
             if (id(g_order_n) == 0) id(g_order)[id(g_order_n)++] = 0;
 
     // safety: keep the clock
-    - priority: -50
-      then:
-        - if:
-            condition: { lambda: 'return id(g_factory_reset);' }
-            then:
-              - delay: 2s
-              - lambda: 'id(g_factory_reset) = false;'
+      - priority: -50
+        then:
+          - if:
+              condition: { lambda: 'return id(g_factory_reset);' }
+              then:
+                - delay: 2s
+                - lambda: 'id(g_factory_reset) = false;'
 
     - priority: -100
       then:
