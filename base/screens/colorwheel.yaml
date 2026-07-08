@@ -21,12 +21,12 @@ script:
   - id: cw_render
     then:
       - lambda: |-
-          // Holt das native LVGL-Objekt über die offizielle ESPHome-Methode
+          // Nutzt den offiziellen C++ Wrapper von ESPHome – ganz ohne rohe LVGL-Pointer!
           if (id(cw_arc) != nullptr) {
-            auto* arc_obj = id(cw_arc)->get_obj();
-            lv_arc_set_value(arc_obj, id(g_cw_hue));
+            id(cw_arc)->set_value(id(g_cw_hue));
             ESP_LOGD("colorwheel", "Farbton aktualisiert: %d°", id(g_cw_hue));
           }
+
 
 
   - id: cw_commit
