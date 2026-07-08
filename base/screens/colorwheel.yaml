@@ -21,18 +21,13 @@ script:
   - id: cw_render
     then:
       - lambda: |-
-          // Erwische die internen Strukturen in LVGL 9
-          #ifndef LV_USE_PRIVATE_API
-          #define LV_USE_PRIVATE_API
-          #endif
-          #include <lvgl.h>
-
-          // Holt das zugrundeliegende LVGL-Objekt und setzt den Wert
+          // Holt das native LVGL-Objekt über die offizielle ESPHome-Methode
           if (id(cw_arc) != nullptr) {
-            auto* arc_obj = (lv_obj_t*)id(cw_arc)->obj;
+            auto* arc_obj = id(cw_arc)->get_obj();
             lv_arc_set_value(arc_obj, id(g_cw_hue));
             ESP_LOGD("colorwheel", "Farbton aktualisiert: %d°", id(g_cw_hue));
           }
+
 
   - id: cw_commit
     mode: restart
