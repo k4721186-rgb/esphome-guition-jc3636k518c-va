@@ -1,4 +1,4 @@
-# Farbsteuerungs-Screen für LVGL 9 (Sicher vor unvollständigen C++ Typen)
+# Farbsteuerungs-Screen für LVGL 9 mit echtem, runden Farbrad
 globals:
   - id: g_cw_hue
     type: uint16_t
@@ -21,6 +21,9 @@ script:
   - id: cw_render
     then:
       - lambda: |-
+          // Aktualisiert den visuellen Bogen auf dem Display passend zum aktuellen Farbton
+          auto* arc_obj = id(cw_arc)->obj;
+          lv_arc_set_value(arc_obj, id(g_cw_hue));
           ESP_LOGD("colorwheel", "Farbton aktualisiert: %d°", id(g_cw_hue));
 
   - id: cw_commit
@@ -31,7 +34,6 @@ script:
           service: light.turn_on
           data:
             entity_id: light.wohnung_bunt
-            # KORREKTUR: Wir bauen ein valides JSON-Array als String zusammen
             hs_color: !lambda |-
               char buf[32];
               sprintf(buf, "[%d, 100]", id(g_cw_hue));
@@ -40,7 +42,6 @@ script:
               return std::to_string(id(g_cw_brightness));
             color_temp_kelvin: !lambda |-
               return std::to_string(id(g_cw_temp));
-
 
 interval:
   - interval: 50ms
@@ -52,7 +53,6 @@ interval:
                 id(g_nav_req) = false; 
                 id(g_knob_capture) = true; 
                 id(g_cw_lasttap) = id(g_tap_seq);
-                // KORREKTUR: Dem System mitteilen, dass wir nun auf Screen 3 angekommen sind!
                 id(g_base) = 3; 
             - lvgl.page.show: { id: page_colorwheel, animation: move_left, time: 250ms }
             - script.execute: cw_render
@@ -63,7 +63,8 @@ interval:
           condition: { lambda: 'return id(g_base)==3 && id(g_knob_delta) != 0;' }
           then:
             - lambda: |-
-                int16_t new_hue = (int16_t)id(g_cw_hue) + (id(g_knob_delta) * 4);
+                // Drehen am Rad verändert den Farbton im 360-Grad-Kreis
+                int16_t new_hue = (int16_t)id(g_cw_hue) + (id(g_knob_delta) * 6);
                 id(g_knob_delta) = 0;
                 if (new_hue >= 360) new_hue -= 360;
                 if (new_hue < 0) new_hue += 360;
@@ -83,62 +84,52 @@ interval:
 lvgl:
   pages:
     - id: page_colorwheel
-      bg_color: 0x000000
+      bg_color: 0x0A0F19 # Ein edles, tiefes Dunkelblau als Hintergrund
       widgets:
-        # --- OBERE SÄULE: HELLIGKEIT ---
+        # --- DAS RUNDE 360° FARBRAD (ARC) ---
+        - arc:
+            id: cw_arc
+            align: CENTER
+            x: 0
+            y: -25  # Nach oben verschoben, um unten Platz für den Regler zu machen
+            width: 140
+            height: 140
+            min_value: 0
+            max_value: 360
+            value: 0
+            bg_start_angle: 0
+            bg_end_angle: 360
+            line_width: 12
+            bg_color: 0x1E293B # Moderner, dunkelgrauer Ring im Ruhezustand
+            indicator:
+              bg_color: 0x38BDF8 # Schönes Cyan, das optisch mitwandert
+            knob:
+              bg_color: 0xFFFFFF # Weißer, gut sichtbarer Positionsknopf
+
+        # --- TEXT & SLIDER FÜR HELLIGKEIT ---
+        - label:
+            align: CENTER
+            x: 0           
+            y: 55 # Direkt über dem Schieberegler platziert
+            text: "Helligkeit"
+            text_color: 0x94A3B8 # Dezent lesbares Graublau
+
         - slider:
             id: brightness_slider
             align: CENTER
-            x: 10            
-            y: -25           
-            width: 150       
-            height: 14       
+            x: 0            
+            y: 75           
+            width: 160       
+            height: 12 # Angenehme Stärke für das UI
             min_value: 1
             max_value: 100
             value: 80        
-            bg_color: 0x1A1A26  
+            bg_color: 0x1E293B  
             indicator:
-              bg_color: 0xFFFFFF 
+              bg_color: 0xE2E8F0 # Cleaner, heller Füllbalken
             knob:
-              bg_color: 0xEEEEEE
+              bg_color: 0xFFFFFF # Kontrastreicher Regelknopf
             on_value:
               then:
                 - lambda: 'id(g_cw_brightness) = (int)x;'
                 - script.execute: cw_commit
-
-        - label:
-            align: CENTER
-            x: -80           
-            y: -25
-            text: "\U000f0335" 
-            text_font: font_artist
-            text_color: 0x888888
-
-        # --- UNTERE SÄULE: FARBTEMPERATUR ---
-        - slider:
-            id: temp_slider
-            align: CENTER
-            x: 10            
-            y: 25            
-            width: 150       
-            height: 14       
-            min_value: 2700  
-            max_value: 6500  
-            value: 4000      
-            bg_color: 0xFFB060  
-            indicator:
-              bg_color: 0xD0E0FF 
-            knob:
-              bg_color: 0xFFFFFF
-            on_value:
-              then:
-                - lambda: 'id(g_cw_temp) = (int)x;'
-                - script.execute: cw_commit
-
-        - label:
-            align: CENTER
-            x: -80           
-            y: 25
-            text: "\U000f050f" 
-            text_font: font_artist
-            text_color: 0x888888
