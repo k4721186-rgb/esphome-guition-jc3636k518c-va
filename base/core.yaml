@@ -169,8 +169,6 @@ esphome:
               pos = comma + 1;
             }
             if (id(g_order_n) == 0) id(g_order)[id(g_order_n)++] = 0;
-
-    // safety: keep the clock
     - priority: -50
       then:
         - if:
