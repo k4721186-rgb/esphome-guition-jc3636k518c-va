@@ -1,4 +1,4 @@
-# Playlist-Auswahl-Screen mit LVGL Roller Widget (Absolut fehlerfrei für LVGL 9)
+# Playlist-Auswahl-Screen mit LVGL Roller Widget (Optimiertes Modern-Design für LVGL 9)
 globals:
   - id: g_pl_index
     type: int
@@ -91,13 +91,24 @@ interval:
 lvgl:
   pages:
     - id: page_playlists
-      bg_color: 0x0B0F19
+      bg_color: 0x0A0F19 # Edles, tiefes Dunkelblau passend zum Farbrad-Screen
       widgets:
         - roller:
             id: my_playlist_roller
             align: CENTER
-            width: 220
+            width: 210
             visible_row_count: 3 
+            # Design des gesamten Walzen-Hintergrunds (Inaktive Einträge)
+            bg_color: 0x0A0F19
+            text_color: 0x64748B # Weiches Schiefergrau für unselected Items
+            border_width: 0     # Entfernt den klobigen Standard-Außenrahmen
+            # Design des aktiven, mittleren Elements (Selected Item)
+            selected:
+              text_color: 0xFFFFFF # Strahlendes Weiß für die aktive Auswahl
+              bg_color: 0x1E293B   # Dunkler, dezenter Balken hinter dem aktiven Text
+              border_width: 1      # Ein feiner Rahmen um das ausgewählte Feld
+              border_color: 0x38BDF8 # Akzentuierung im selben Cyan wie der Farbrad-Indikator
+              radius: 6            # Leicht abgerundete Ecken für den Fokus-Balken
             options:
               - "Top Hits 2021"
               - "Top Hits 2022"
