@@ -1,49 +1,37 @@
-# Farbsteuerungs-Screen für LVGL 9 mit echtem, runden Farbrad (Riesen-Regenbogen-Edition)
+# Farbsteuerungs-Screen mit 9 vordefinierten Farbkacheln & Helligkeits-Drehrad
 globals:
-  - id: g_cw_hue
-    type: uint16_t
-    restore_value: no
-    initial_value: '0'
   - id: g_cw_lasttap
     type: int
     restore_value: no
     initial_value: '0'
   - id: g_cw_brightness
     type: int
-    restore_value: no
+    restore_value: yes
     initial_value: '80'
-  - id: g_cw_temp
-    type: int
-    restore_value: no
-    initial_value: '4000'
 
 script:
   - id: cw_render
     then:
-      - lvgl.arc.update:
-          id: cw_arc
-          value: !lambda "return id(g_cw_hue);"
-      - lambda: |-
-          ESP_LOGD("colorwheel", "Farbton auf Display aktualisiert: %d°", id(g_cw_hue));
+      - lvgl.slider.update:
+          id: cw_bright_slider
+          value: !lambda "return id(g_cw_brightness);"
+      - label.printf:
+          id: cw_bright_label
+          format: "%d%%"
+          args: ["id(g_cw_brightness)"]
 
-  - id: cw_commit
+  - id: cw_commit_brightness
     mode: restart
     then:
-      - delay: 400ms
+      - delay: 150ms
       - homeassistant.service:
           service: light.turn_on
           data:
             entity_id: light.wohnung_bunt
-            hs_color: !lambda |-
-              int ha_hue = (int)id(g_cw_hue) + 90;
-              if (ha_hue >= 360) ha_hue -= 360;
-              return "[" + std::to_string(ha_hue) + ", 100]";
-            brightness_pct: !lambda |-
-              return std::to_string(id(g_cw_brightness));
-            color_temp_kelvin: !lambda |-
-              return std::to_string(id(g_cw_temp));
+            brightness_pct: !lambda "return std::to_string(id(g_cw_brightness));"
 
 interval:
+  # 1. Screen-Aktivierung bei Navigation
   - interval: 50ms
     then:
       - if:
@@ -57,20 +45,22 @@ interval:
             - lvgl.page.show: { id: page_colorwheel, animation: move_left, time: 250ms }
             - script.execute: cw_render
 
-  - interval: 80ms
+  # 2. Drehknopf steuert jetzt direkt die Helligkeit
+  - interval: 60ms
     then:
       - if:
           condition: { lambda: 'return id(g_base)==3 && id(g_knob_delta) != 0;' }
           then:
             - lambda: |-
-                int16_t new_hue = (int16_t)id(g_cw_hue) + (id(g_knob_delta) * 6);
+                int new_bright = id(g_cw_brightness) + (id(g_knob_delta) * 4);
                 id(g_knob_delta) = 0;
-                if (new_hue >= 360) new_hue -= 360;
-                if (new_hue < 0) new_hue += 360;
-                id(g_cw_hue) = (uint16_t)new_hue;
+                if (new_bright > 100) new_bright = 100;
+                if (new_bright < 5) new_bright = 5;
+                id(g_cw_brightness) = new_bright;
             - script.execute: cw_render
-            - script.execute: cw_commit
+            - script.execute: cw_commit_brightness
 
+      # 3. Klick auf den Drehknopf schaltet das Licht komplett an/aus
       - if:
           condition: { lambda: 'return id(g_base)==3 && id(g_tap_seq) != id(g_cw_lasttap);' }
           then:
@@ -83,56 +73,149 @@ interval:
 lvgl:
   pages:
     - id: page_colorwheel
-      bg_color: 0x05070B 
+      bg_color: 0x0A0F1D
       widgets:
-        - arc:
-            id: cw_arc
+        
+        # --- ZENTRALE HELLIGKEITSANZEIGE ---
+        - label:
+            id: cw_bright_label
             align: CENTER
             x: 0
-            y: -15  
-            width: 260   
-            height: 260  
-            min_value: 0
-            max_value: 360
-            value: 0
-            start_angle: 0
-            end_angle: 360
-            line_width: 24 
-            bg_color: 0x111827 
-            bg_grad_color: 0xFF0000 
-            indicator:
-              bg_color: 0x00FF00 
-              bg_grad_color: 0x0000FF 
-            knob:
-              bg_color: 0xFFFFFF 
-              width: 28
-              height: 28
-
-        - label:
-            align: CENTER
-            x: 0           
-            y: 85 
-            text: "Helligkeit"
-            text_color: 0x64748B
+            y: -120
+            text: "80%"
+            text_color: 0xF8FAFC
+            text_font: font_med
 
         - slider:
-            id: brightness_slider
+            id: cw_bright_slider
             align: CENTER
-            x: 0            
-            y: 110           
-            width: 140       
-            height: 10 
-            min_value: 1
+            x: 0
+            y: -105
+            width: 120
+            height: 6
+            min_value: 5
             max_value: 100
-            value: 80        
-            bg_color: 0x1E293B  
+            value: 80
+            clickable: false
+            bg_color: 0x1E293B
             indicator:
-              bg_color: 0x38BDF8 
+              bg_color: 0x38BDF8
             knob:
-              bg_color: 0xFFFFFF 
-              width: 16
-              height: 16
-            on_value:
-              then:
-                - lambda: 'id(g_cw_brightness) = (int)x;'
-                - script.execute: cw_commit
+              width: 0
+              height: 0
+
+        # --- DAS 3x3 FARB-GRID (9 KNÖPFE) ---
+        
+        # Zeile 1: Lichttemperaturen (Kalt, Tageslicht, Warm)
+        - button:
+            align: CENTER
+            x: -75
+            y: -50
+            width: 60
+            height: 40
+            bg_color: 0xE0F2FE
+            radius: 8
+            on_click:
+              - homeassistant.service:
+                  service: light.turn_on
+                  data: { entity_id: light.wohnung_bunt, color_temp_kelvin: '6500' }
+        - button:
+            align: CENTER
+            x: 0
+            y: -50
+            width: 60
+            height: 40
+            bg_color: 0xFFFBEB
+            radius: 8
+            on_click:
+              - homeassistant.service:
+                  service: light.turn_on
+                  data: { entity_id: light.wohnung_bunt, color_temp_kelvin: '4000' }
+        - button:
+            align: CENTER
+            x: 75
+            y: -50
+            width: 60
+            height: 40
+            bg_color: 0xFFEDD5
+            radius: 8
+            on_click:
+              - homeassistant.service:
+                  service: light.turn_on
+                  data: { entity_id: light.wohnung_bunt, color_temp_kelvin: '2700' }
+
+        # Zeile 2: Primärfarben (Rot, Gelb, Orange)
+        - button:
+            align: CENTER
+            x: -75
+            y: 5
+            width: 60
+            height: 40
+            bg_color: 0xEF4444
+            radius: 8
+            on_click:
+              - homeassistant.service:
+                  service: light.turn_on
+                  data: { entity_id: light.wohnung_bunt, rgb_color: [255, 0, 0] }
+        - button:
+            align: CENTER
+            x: 0
+            y: 5
+            width: 60
+            height: 40
+            bg_color: 0xFBBF24
+            radius: 8
+            on_click:
+              - homeassistant.service:
+                  service: light.turn_on
+                  data: { entity_id: light.wohnung_bunt, rgb_color: [255, 230, 0] }
+        - button:
+            align: CENTER
+            x: 75
+            y: 5
+            width: 60
+            height: 40
+            bg_color: 0xF97316
+            radius: 8
+            on_click:
+              - homeassistant.service:
+                  service: light.turn_on
+                  data: { entity_id: light.wohnung_bunt, rgb_color: [255, 100, 0] }
+
+        # Zeile 3: Buntfarben (Grün, Blau, Lila)
+        - button:
+            align: CENTER
+            x: -75
+            y: 60
+            width: 60
+            height: 40
+            bg_color: 0x22C55E
+            radius: 8
+            on_click:
+              - homeassistant.service:
+                  service: light.turn_on
+                  data: { entity_id: light.wohnung_bunt, rgb_color: [0, 255, 0] }
+        - button:
+            align: CENTER
+            x: 0
+            y: 60
+            width: 60
+            height: 40
+            bg_color: 0x3B82F6
+            radius: 8
+            on_click:
+              - homeassistant.service:
+                  service: light.turn_on
+                  data: { entity_id: light.wohnung_bunt, rgb_color: [0, 0, 255] }
+        - button:
+            align: CENTER
+            x: 75
+            y: 60
+            width: 60
+            height: 40
+            bg_color: 0xA855F7
+            radius: 8
+            on_click:
+              - homeassistant.service:
+                  service: light.turn_on
+                  data: { entity_id: light.wohnung_bunt, rgb_color: [160, 0, 255] }
