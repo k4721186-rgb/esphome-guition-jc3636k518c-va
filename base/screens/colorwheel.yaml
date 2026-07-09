@@ -1,239 +1,140 @@
-# Farbsteuerungs-Screen mit 9 vordefinierten Farbkacheln & Helligkeits-Drehrad
+# =============================================================================
+# LOKALER SZENEN-SELECTOR MIT DYNAMISCHEN ICONS (KLICK AKTIVIERT SZENE DIREKT)
+# =============================================================================
 globals:
-  - id: g_cw_lasttap
+  - id: g_cw_lasttap    
     type: int
     restore_value: no
     initial_value: '0'
-  - id: g_cw_brightness
-    type: int
+  - id: g_scene_target     
+    type: float
     restore_value: yes
-    initial_value: '80'
+    initial_value: '1.0'
 
 script:
-  - id: cw_render
-    then:
-      - lvgl.slider.update:
-          id: cw_bright_slider
-          value: !lambda "return id(g_cw_brightness);"
-      - lvgl.label.update:
-          id: cw_bright_label
-          text: !lambda |-
-            return std::to_string(id(g_cw_brightness)) + "%";
-
+  # Triggert die ausgewählte Szene verzögert nach dem Drehen
   - id: cw_commit_brightness
     mode: restart
     then:
-      - delay: 150ms
+      - delay: 400ms
       - homeassistant.action:
-          action: light.turn_on
+          action: scene.turn_on
           data:
-            entity_id: light.wohnung_bunt
-            brightness_pct: !lambda "return std::to_string(id(g_cw_brightness));"
+            entity_id: !lambda |-
+              int idx = (int)id(g_scene_target);
+              if (idx == 1) return std::string("scene.szenen_aus");
+              if (idx == 2) return std::string("scene.ambiente_gemutlich");
+              if (idx == 3) return std::string("scene.ambiente_musik");
+              if (idx == 4) return std::string("scene.wohnung_rot");
+              if (idx == 5) return std::string("scene.wohnung_orange");
+              if (idx == 6) return std::string("scene.wohnung_blau");
+              if (idx == 7) return std::string("scene.wohnung_grun");
+              if (idx == 8) return std::string("scene.wohnung_lila");
+              if (idx == 9) return std::string("scene.wohnung_tageslicht");
+              return std::string("");
 
 interval:
-  # 1. Screen-Aktivierung bei Navigation
   - interval: 50ms
     then:
       - if:
           condition: { lambda: 'return id(g_nav_req) && id(g_base)==3;' }
           then:
-            - lambda: |-
-                id(g_nav_req) = false; 
-                id(g_knob_capture) = true; 
-                id(g_cw_lasttap) = id(g_tap_seq);
-                id(g_base) = 3; 
+            - lambda: 'id(g_nav_req) = false; id(g_knob_capture) = true; id(g_cw_lasttap) = id(g_tap_seq);'
             - lvgl.page.show: { id: page_colorwheel, animation: move_left, time: 250ms }
             - script.execute: cw_render
 
-  # 2. Drehknopf steuert die Helligkeit
-  - interval: 60ms
+  # Knob-Drehung schaltet Szenen 1-9 durch
+  - interval: 120ms
     then:
       - if:
           condition: { lambda: 'return id(g_base)==3 && id(g_knob_delta) != 0;' }
           then:
             - lambda: |-
-                int new_bright = id(g_cw_brightness) + (id(g_knob_delta) * 4);
+                id(g_scene_target) += id(g_knob_delta);
                 id(g_knob_delta) = 0;
-                if (new_bright > 100) new_bright = 100;
-                if (new_bright < 5) new_bright = 5;
-                id(g_cw_brightness) = new_bright;
-            - script.execute: cw_render
+                if (id(g_scene_target) < 1.0) id(g_scene_target) = 1.0;
+                if (id(g_scene_target) > 9.0) id(g_scene_target) = 9.0;
             - script.execute: cw_commit_brightness
+            - script.execute: cw_render
 
-      # 3. Klick auf den Drehknopf schaltet das Licht komplett an/aus
+      # --- EIN KLICK TRIGGERT NUN DIE SZENE SOFORT (STATT LIGHT.TOGGLE) ---
       - if:
           condition: { lambda: 'return id(g_base)==3 && id(g_tap_seq) != id(g_cw_lasttap);' }
           then:
             - lambda: 'id(g_cw_lasttap) = id(g_tap_seq);'
-            - homeassistant.action:
-                action: light.toggle
-                data:
-                  entity_id: light.wohnung_bunt
+            # Führt das Skript sofort ohne die 400ms Wartezeit aus:
+            - script.execute: cw_commit_brightness
+
+cw_render:
+  # (Bleibt identisch zu vorher für Namen, Icons und Kreisbogen)
+  then:
+    - lvgl.label.update:
+        id: cw_bright_label
+        text: !lambda |-
+          int idx = (int)id(g_scene_target);
+          if (idx == 1) return std::string("Szenen Aus");
+          if (idx == 2) return std::string("Gemütlich");
+          if (idx == 3) return std::string("Musik");
+          if (idx == 4) return std::string("Rot");
+          if (idx == 5) return std::string("Orange");
+          if (idx == 6) return std::string("Blau");
+          if (idx == 7) return std::string("Grün");
+          if (idx == 8) return std::string("Lila");
+          if (idx == 9) return std::string("Tageslicht");
+          return std::string("--");
+    - lvgl.label.update:
+        id: cw_icon_label
+        text: !lambda |-
+          int idx = (int)id(g_scene_target);
+          if (idx == 1) return std::string("\U000f0a5f");
+          if (idx == 2) return std::string("\U000f0732");
+          if (idx == 3) return std::string("\U000f075a");
+          if (idx == 4) return std::string("\U000f12c3");
+          if (idx == 5) return std::string("\U000f12c3");
+          if (idx == 6) return std::string("\U000f12c3");
+          if (idx == 7) return std::string("\U000f12c3");
+          if (idx == 8) return std::string("\U000f12c3");
+          if (idx == 9) return std::string("\U000f059f");
+          return std::string("");
+    - lvgl.arc.update:
+        id: cw_bright_slider
+        value: !lambda 'return (int)(100L * (id(g_scene_target) - 1) / 8);'
 
 lvgl:
   pages:
     - id: page_colorwheel
-      bg_color: 0x0A0F1D
+      bg_color: 0x0B1020
       widgets:
-        
-        # --- ZENTRALE HELLIGKEITSANZEIGE ---
-        - label:
-            id: cw_bright_label
-            align: CENTER
-            x: 0
-            y: -120
-            text: "80%"
-            text_color: 0xF8FAFC
-            text_font: font_med
-
-        - slider:
+        - arc:
             id: cw_bright_slider
             align: CENTER
-            x: 0
-            y: -105
-            width: 120
-            height: 6
-            min_value: 5
+            width: 300
+            height: 300
+            arc_width: 12
+            adjustable: false
+            min_value: 0
             max_value: 100
-            value: 80
-            clickable: false
-            bg_color: 0x1E293B
+            value: 0
+            start_angle: 135
+            end_angle: 45
+            arc_color: 0x21304A
             indicator:
-              bg_color: 0x38BDF8
-            knob:
-              width: 0
-              height: 0
-
-        # --- DAS 3x3 FARB-GRID (9 KNÖPFE) ---
-        
-        # Zeile 1: Lichttemperaturen (Kalt, Tageslicht, Warm)
-        - button:
+              arc_color: 0xEC4899 
+              arc_width: 12
+        - label: { align: CENTER, y: -86, text: "SZENEN", text_font: font_artist, text_color: 0xEC4899 }
+        - label: 
+            id: cw_icon_label
             align: CENTER
-            x: -75
-            y: -50
-            width: 60
-            height: 40
-            bg_color: 0xE0F2FE
-            radius: 8
-            on_click:
-              - homeassistant.action:
-                  action: light.turn_on
-                  data:
-                    entity_id: light.wohnung_bunt
-                    color_temp_kelvin: "6500"
-        - button:
+            y: -36
+            text: ""
+            text_font: icons34
+            text_color: 0xFFFFFF
+        - label: 
+            id: cw_bright_label
             align: CENTER
-            x: 0
-            y: -50
-            width: 60
-            height: 40
-            bg_color: 0xFFFBEB
-            radius: 8
-            on_click:
-              - homeassistant.action:
-                  action: light.turn_on
-                  data:
-                    entity_id: light.wohnung_bunt
-                    color_temp_kelvin: "4000"
-        - button:
-            align: CENTER
-            x: 75
-            y: -50
-            width: 60
-            height: 40
-            bg_color: 0xFFEDD5
-            radius: 8
-            on_click:
-              - homeassistant.action:
-                  action: light.turn_on
-                  data:
-                    entity_id: light.wohnung_bunt
-                    color_temp_kelvin: "2700"
-
-        # Zeile 2: Primärfarben (Rot, Gelb, Orange)
-        - button:
-            align: CENTER
-            x: -75
-            y: 5
-            width: 60
-            height: 40
-            bg_color: 0xEF4444
-            radius: 8
-            on_click:
-              - homeassistant.action:
-                  action: light.turn_on
-                  data:
-                    entity_id: light.wohnung_bunt
-                    rgb_color: "[255, 0, 0]"
-        - button:
-            align: CENTER
-            x: 0
-            y: 5
-            width: 60
-            height: 40
-            bg_color: 0xFBBF24
-            radius: 8
-            on_click:
-              - homeassistant.action:
-                  action: light.turn_on
-                  data:
-                    entity_id: light.wohnung_bunt
-                    rgb_color: "[255, 230, 0]"
-        - button:
-            align: CENTER
-            x: 75
-            y: 5
-            width: 60
-            height: 40
-            bg_color: 0xF97316
-            radius: 8
-            on_click:
-              - homeassistant.action:
-                  action: light.turn_on
-                  data:
-                    entity_id: light.wohnung_bunt
-                    rgb_color: "[255, 100, 0]"
-
-        # Zeile 3: Buntfarben (Grün, Blau, Lila)
-        - button:
-            align: CENTER
-            x: -75
-            y: 60
-            width: 60
-            height: 40
-            bg_color: 0x22C55E
-            radius: 8
-            on_click:
-              - homeassistant.action:
-                  action: light.turn_on
-                  data:
-                    entity_id: light.wohnung_bunt
-                    rgb_color: "[0, 255, 0]"
-        - button:
-            align: CENTER
-            x: 0
-            y: 60
-            width: 60
-            height: 40
-            bg_color: 0x3B82F6
-            radius: 8
-            on_click:
-              - homeassistant.action:
-                  action: light.turn_on
-                  data:
-                    entity_id: light.wohnung_bunt
-                    rgb_color: "[0, 0, 255]"
-        - button:
-            align: CENTER
-            x: 75
-            y: 60
-            width: 60
-            height: 40
-            bg_color: 0xA855F7
-            radius: 8
-            on_click:
-              - homeassistant.action:
-                  action: light.turn_on
-                  data:
-                    entity_id: light.wohnung_bunt
-                    rgb_color: "[160, 0, 255]"
+            y: 10
+            text: "--"
+            text_font: montserrat_24
+            text_color: 0xFFFFFF
+        - label: { align: CENTER, y: 46, text: "Wählen...", text_font: font_med, text_color: 0x9FC7BE }
+        - label: { align: CENTER, y: 92, text: "Wohnung", text_font: font_artist, text_color: 0xCFF2EA }
