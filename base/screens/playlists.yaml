@@ -3,7 +3,7 @@ esphome:
   on_boot:
     - priority: 655
       then:
-        - lambda: 'id(g_present)[3] = true;' # Platz 3 im Karussell
+        - lambda: 'id(g_present)[2] = true;' # Platz 3 im Karussell
 
 globals:
   - id: g_bgpl_lasttap    
