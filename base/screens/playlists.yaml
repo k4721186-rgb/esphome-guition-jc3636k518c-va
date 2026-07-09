@@ -3,7 +3,7 @@ esphome:
   on_boot:
     - priority: 655
       then:
-        - lambda: 'id(g_present)[3] = true;' # Verbleibt auf Platz 3 im Karussell (ehemals Colorwheel)
+        - lambda: 'id(g_present)[3] = true;' # Platz 3 im Karussell
 
 globals:
   - id: g_bgpl_lasttap    
@@ -28,7 +28,7 @@ globals:
     initial_value: '1.0'
 
 script:
-  # 1. Startet Denon & Music Assistant PLAYLIST SOFORT (wird vom Klick genutzt)
+  # 1. Startet Denon & Music Assistant PLAYLIST SOFORT
   - id: bgpl_commit_instant
     mode: restart
     then:
@@ -55,14 +55,14 @@ script:
               if (idx == 9) return std::string("500 Random tracks (from library)");
               return std::string("");
 
-  # 2. Triggert die Musik VERZÖGERT (2 Sekunden Wartezeit nach dem Drehen)
+  # 2. Triggert die Musik VERZÖGERT (2 Sekunden)
   - id: bgpl_commit_delayed
     mode: restart
     then:
       - delay: 2000ms
       - script.execute: bgpl_commit_instant
 
-  # 3. Aktualisiert das Display (Texte, Icons und den Bogen)
+  # 3. Aktualisiert das Display
   - id: bgpl_render
     then:
       - lvgl.label.update:
@@ -83,11 +83,11 @@ script:
           id: bgpl_icon_label
           text: !lambda |-
             int idx = (int)id(g_bgpl_target);
-            if (idx >= 1 && idx <= 5) return std::string("\U000f075a"); # Musiknote
-            if (idx == 6) return std::string("\U000f180d");             # Schallplatte
-            if (idx == 7) return std::string("\U000f0241");             # Blitz
-            if (idx == 8) return std::string("\U000f0196");             # Smiley
-            if (idx == 9) return std::string("\U000f049a");             # Shuffle
+            if (idx >= 1 && idx <= 5) return std::string("\U000f075a"); 
+            if (idx == 6) return std::string("\U000f180d");             
+            if (idx == 7) return std::string("\U000f0241");             
+            if (idx == 8) return std::string("\U000f0196");             
+            if (idx == 9) return std::string("\U000f049a");             
             return std::string("");
       - lvgl.arc.update:
           id: bgpl_bright_slider
@@ -97,20 +97,20 @@ sensor: []
 text_sensor: []
 
 interval:
-  # Navigation fängt Platz 3 im Karussell ab (mit allen Richtungs-Animationen)
+  # Navigation fängt Platz 3 im Karussell ab (Geändert auf page_favoriten)
   - interval: 50ms
     then:
       - if:
           condition: { lambda: 'return id(g_nav_req) && id(g_base)==3;' }
           then:
             - lambda: 'id(g_nav_req) = false; id(g_knob_capture) = true; id(g_bgpl_lasttap) = id(g_tap_seq);'
-            - if: { condition: { lambda: 'return id(g_nav_anim)==0;' }, then: [lvgl.page.show: { id: page_colorwheel, animation: move_left,   time: 250ms }] }
-            - if: { condition: { lambda: 'return id(g_nav_anim)==1;' }, then: [lvgl.page.show: { id: page_colorwheel, animation: move_right,  time: 250ms }] }
-            - if: { condition: { lambda: 'return id(g_nav_anim)==2;' }, then: [lvgl.page.show: { id: page_colorwheel, animation: move_top,    time: 250ms }] }
-            - if: { condition: { lambda: 'return id(g_nav_anim)==3;' }, then: [lvgl.page.show: { id: page_colorwheel, animation: move_bottom, time: 250ms }] }
+            - if: { condition: { lambda: 'return id(g_nav_anim)==0;' }, then: [lvgl.page.show: { id: page_favoriten, animation: move_left,   time: 250ms }] }
+            - if: { condition: { lambda: 'return id(g_nav_anim)==1;' }, then: [lvgl.page.show: { id: page_favoriten, animation: move_right,  time: 250ms }] }
+            - if: { condition: { lambda: 'return id(g_nav_anim)==2;' }, then: [lvgl.page.show: { id: page_favoriten, animation: move_top,    time: 250ms }] }
+            - if: { condition: { lambda: 'return id(g_nav_anim)==3;' }, then: [lvgl.page.show: { id: page_favoriten, animation: move_bottom, time: 250ms }] }
             - script.execute: bgpl_render
 
-  # Knob-Drehung schaltet Playlists durch
+  # Knob-Drehung
   - interval: 120ms
     then:
       - if:
@@ -124,7 +124,7 @@ interval:
             - script.execute: bgpl_commit_delayed
             - script.execute: bgpl_render
 
-      # Klick startet die gewählte Musik SOFORT
+      # Klick
       - if:
           condition: { lambda: 'return id(g_base)==3 && id(g_tap_seq) != id(g_bgpl_lasttap);' }
           then:
@@ -133,7 +133,7 @@ interval:
 
 lvgl:
   pages:
-    - id: page_colorwheel
+    - id: page_favoriten
       bg_color: 0x0A0F19 
       widgets:
         - arc:
@@ -156,5 +156,5 @@ lvgl:
         - label: { align: CENTER, y: -86, text: "FAVORITEN", text_font: font_artist, text_color: 0x38BDF8 }
         - label: { id: bgpl_icon_label, align: CENTER, y: -36, text: "", text_font: icons34, text_color: 0xFFFFFF }
         - label: { id: bgpl_bright_label, align: CENTER, y: 10, width: 260, text_align: CENTER, text: "--", text_font: montserrat_24, text_color: 0xFFFFFF }
-        - label: { align: CENTER, y: 46, text: "Wählen...", text_font: font_med, text_color: 0x9FC7BE }
+        - label: { align: CENTER, y: 46, text: "Wählen...", text_font: montserrat_24, text_color: 0x9FC7BE }
         - label: { align: CENTER, y: 92, text: "Musik", text_font: font_artist, text_color: 0xCFEAE4 }
