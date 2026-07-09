@@ -1,4 +1,10 @@
 # Farbsteuerungs-Screen - Umgebaut zum Szenen-Selector für das SmartKnob (Keine ID-Konflikte)
+esphome:
+  on_boot:
+    - priority: 655
+      then:
+        - lambda: 'id(g_present)[5] = true;' # Registriert den Szenen-Screen jetzt fest auf Platz 5
+
 globals:
   - id: g_sc_lasttap    
     type: int
@@ -73,21 +79,21 @@ script:
           value: !lambda 'return (int)(100L * (id(g_sc_target) - 1) / 8);'
 
 interval:
-  # Navigation fängt Platz 3 im Karussell ab (Geändert auf page_scenes)
+  # Navigation fängt Platz 5 im Karussell ab (Geändert auf id(g_base)==5)
   - interval: 50ms
     then:
       - if:
-          condition: { lambda: 'return id(g_nav_req) && id(g_base)==3;' }
+          condition: { lambda: 'return id(g_nav_req) && id(g_base)==5;' }
           then:
             - lambda: 'id(g_nav_req) = false; id(g_knob_capture) = true; id(g_sc_lasttap) = id(g_tap_seq);'
             - lvgl.page.show: { id: page_scenes, animation: move_left, time: 250ms }
             - script.execute: sc_render
 
-  # Knob-Drehung schaltet Szenen 1-9 durch
+  # Knob-Drehung schaltet Szenen 1-9 durch (Hört auf Platz 5)
   - interval: 120ms
     then:
       - if:
-          condition: { lambda: 'return id(g_base)==3 && id(g_knob_delta) != 0;' }
+          condition: { lambda: 'return id(g_base)==5 && id(g_knob_delta) != 0;' }
           then:
             - lambda: |-
                 id(g_sc_target) += id(g_knob_delta);
@@ -97,9 +103,9 @@ interval:
             - script.execute: sc_commit_delayed
             - script.execute: sc_render
 
-      # Klick führt die Szene SOFORT aus
+      # Klick führt die Szene SOFORT aus (Hört auf Platz 5)
       - if:
-          condition: { lambda: 'return id(g_base)==3 && id(g_tap_seq) != id(g_sc_lasttap);' }
+          condition: { lambda: 'return id(g_base)==5 && id(g_tap_seq) != id(g_sc_lasttap);' }
           then:
             - lambda: 'id(g_sc_lasttap) = id(g_tap_seq);'
             - script.execute: sc_commit_instant
