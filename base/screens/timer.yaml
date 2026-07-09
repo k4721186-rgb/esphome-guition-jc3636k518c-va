@@ -14,4 +14,4 @@ esphome:
   on_boot:
     - priority: 680
       then:
-        - lambda: 'id(g_present)[2] = true;'   # add the timer screen to the carousel
+        - lambda: 'id(g_present)[7] = true;'   # add the timer screen to the carousel
