@@ -3,7 +3,7 @@ esphome:
   on_boot:
     - priority: 655
       then:
-        - lambda: 'id(g_present)[4] = true;' # Registriert diesen Screen fest auf Platz 4
+        - lambda: 'id(g_present)[3] = true;' # Registriert diesen Screen fest auf Platz 4
 
 globals:
   - id: g_th_cur        
