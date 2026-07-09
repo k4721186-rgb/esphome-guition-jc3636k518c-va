@@ -1,9 +1,9 @@
-# WLED Preset Selector - Nativer YAML Modus (21 Presets)
+# WLED Preset Selector (Ehemals Thermostat) - Nativer YAML Modus (21 Presets) auf Platz 4
 esphome:
   on_boot:
     - priority: 655
       then:
-        - lambda: 'id(g_present)[7] = true;'
+        - lambda: 'id(g_present)[4] = true;' # Registriert diesen Screen fest auf Platz 4
 
 globals:
   - id: g_th_cur        
@@ -53,8 +53,8 @@ script:
     mode: restart
     then:
       - delay: 300ms
-      - homeassistant.service:
-          service: select.select_option
+      - homeassistant.action:
+          action: select.select_option
           data:
             entity_id: select.wled_lamelle_voreinstellung
             option: !lambda |-
@@ -122,10 +122,11 @@ sensor: []
 text_sensor: []
 
 interval:
+  # Navigation fängt jetzt Platz 4 im Karussell ab
   - interval: 50ms
     then:
       - if:
-          condition: { lambda: 'return id(g_nav_req) && id(g_base)==7;' }
+          condition: { lambda: 'return id(g_nav_req) && id(g_base)==4;' }
           then:
             - lambda: 'id(g_nav_req) = false; id(g_knob_capture) = true; id(g_th_lasttap) = id(g_tap_seq);'
             - if: { condition: { lambda: 'return id(g_nav_anim)==0;' }, then: [lvgl.page.show: { id: page_thermostat, animation: move_left,   time: 250ms }] }
@@ -133,11 +134,12 @@ interval:
             - if: { condition: { lambda: 'return id(g_nav_anim)==2;' }, then: [lvgl.page.show: { id: page_thermostat, animation: move_top,    time: 250ms }] }
             - if: { condition: { lambda: 'return id(g_nav_anim)==3;' }, then: [lvgl.page.show: { id: page_thermostat, animation: move_bottom, time: 250ms }] }
             - script.execute: th_render
-            
+
+  # Knob-Drehung schaltet Effekte durch (Hört auf Platz 4)
   - interval: 120ms
     then:
       - if:
-          condition: { lambda: 'return id(g_base)==7 && id(g_knob_delta) != 0;' }
+          condition: { lambda: 'return id(g_base)==4 && id(g_knob_delta) != 0;' }
           then:
             - lambda: |-
                 id(g_th_target) += id(g_knob_delta) * id(g_th_step);
@@ -147,13 +149,14 @@ interval:
                 id(g_th_pending) = true;
             - script.execute: th_commit
             - script.execute: th_render
-            
+
+      # Klick schaltet die Lamellen komplett an/aus (Hört auf Platz 4)
       - if:
-          condition: { lambda: 'return id(g_base)==7 && id(g_tap_seq) != id(g_th_lasttap);' }
+          condition: { lambda: 'return id(g_base)==4 && id(g_tap_seq) != id(g_th_lasttap);' }
           then:
             - lambda: 'id(g_th_lasttap) = id(g_tap_seq);'
-            - homeassistant.service:
-                service: light.toggle
+            - homeassistant.action:
+                action: light.toggle
                 data:
                   entity_id: light.wled_lamelle_haupt
 
@@ -179,7 +182,7 @@ lvgl:
               arc_color: 0x2FE6CF
               arc_width: 12
         - label: { id: th_action, align: CENTER, y: -86, text: "EFFEKTE", text_font: font_artist, text_color: 0x2FE6CF }
-        - label: { id: th_target, align: CENTER, y: -14, text: "--", text_font: montserrat_28, text_color: 0xFFFFFF }
-        - label: { id: th_cur, align: CENTER, y: 30, text: "Wählen...", text_font: font_med, text_color: 0x9FC7BE }
+        - label: { id: th_target, align: CENTER, y: -14, text: "--", text_font: montserrat_24, text_color: 0xFFFFFF }
+        - label: { id: th_cur, align: CENTER, y: 30, text: "Wählen...", text_font: montserrat_24, text_color: 0x9FC7BE }
         - label: { id: th_hum, align: CENTER, y: 58, text: "", text_font: font_artist, text_color: 0x3FA9D6, hidden: true }
         - label: { id: th_mode, align: CENTER, y: 92, text: "Lamellen", text_font: font_artist, text_color: 0xCFEAE4 }
