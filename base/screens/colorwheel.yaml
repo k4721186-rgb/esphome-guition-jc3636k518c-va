@@ -3,7 +3,7 @@ esphome:
   on_boot:
     - priority: 655
       then:
-        - lambda: 'id(g_present)[5] = true;' # Registriert den Szenen-Screen jetzt fest auf Platz 5
+        - lambda: 'id(g_present)[4] = true;' # Registriert den Szenen-Screen jetzt fest auf Platz 5
 
 globals:
   - id: g_sc_lasttap    
