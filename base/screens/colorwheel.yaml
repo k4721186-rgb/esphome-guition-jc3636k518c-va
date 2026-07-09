@@ -1,24 +1,24 @@
-# Farbsteuerungs-Screen - Umgebaut zum Szenen-Selector für das SmartKnob (2.0s Delay)
+# Farbsteuerungs-Screen - Umgebaut zum Szenen-Selector für das SmartKnob (Keine ID-Konflikte)
 globals:
-  - id: g_cw_lasttap    
+  - id: g_sc_lasttap    
     type: int
     restore_value: no
     initial_value: '0'
-  - id: g_scene_target     
+  - id: g_sc_target     
     type: float
     restore_value: yes
     initial_value: '1.0'
 
 script:
   # 1. Triggert die Szene SOFORT (wird vom Klick-Event genutzt)
-  - id: cw_commit_instant
+  - id: sc_commit_instant
     mode: restart
     then:
       - homeassistant.action:
           action: scene.turn_on
           data:
             entity_id: !lambda |-
-              int idx = (int)id(g_scene_target);
+              int idx = (int)id(g_sc_target);
               if (idx == 1) return std::string("scene.szenen_aus");
               if (idx == 2) return std::string("scene.ambiente_gemutlich");
               if (idx == 3) return std::string("scene.ambiente_musik");
@@ -31,19 +31,19 @@ script:
               return std::string("");
 
   # 2. Triggert die Szene VERZÖGERT (Auf 2,0 Sekunden erhöht)
-  - id: cw_commit_brightness
+  - id: sc_commit_delayed
     mode: restart
     then:
       - delay: 2000ms
-      - script.execute: cw_commit_instant
+      - script.execute: sc_commit_instant
 
   # 3. Aktualisiert das Display (Labels, Icons, Bogen)
-  - id: cw_render
+  - id: sc_render
     then:
       - lvgl.label.update:
-          id: cw_bright_label
+          id: sc_bright_label
           text: !lambda |-
-            int idx = (int)id(g_scene_target);
+            int idx = (int)id(g_sc_target);
             if (idx == 1) return std::string("Szenen Aus");
             if (idx == 2) return std::string("Gemütlich");
             if (idx == 3) return std::string("Musik");
@@ -55,9 +55,9 @@ script:
             if (idx == 9) return std::string("Tageslicht");
             return std::string("--");
       - lvgl.label.update:
-          id: cw_icon_label
+          id: sc_icon_label
           text: !lambda |-
-            int idx = (int)id(g_scene_target);
+            int idx = (int)id(g_sc_target);
             if (idx == 1) return std::string("\U000f0a5f");
             if (idx == 2) return std::string("\U000f0732");
             if (idx == 3) return std::string("\U000f075a");
@@ -69,48 +69,48 @@ script:
             if (idx == 9) return std::string("\U000f059f");
             return std::string("");
       - lvgl.arc.update:
-          id: cw_bright_slider
-          value: !lambda 'return (int)(100L * (id(g_scene_target) - 1) / 8);'
+          id: sc_bright_slider
+          value: !lambda 'return (int)(100L * (id(g_sc_target) - 1) / 8);'
 
 interval:
-  # Navigation fängt Platz 3 im Karussell ab
+  # Navigation fängt Platz 3 im Karussell ab (Geändert auf page_scenes)
   - interval: 50ms
     then:
       - if:
           condition: { lambda: 'return id(g_nav_req) && id(g_base)==3;' }
           then:
-            - lambda: 'id(g_nav_req) = false; id(g_knob_capture) = true; id(g_cw_lasttap) = id(g_tap_seq);'
-            - lvgl.page.show: { id: page_colorwheel, animation: move_left, time: 250ms }
-            - script.execute: cw_render
+            - lambda: 'id(g_nav_req) = false; id(g_knob_capture) = true; id(g_sc_lasttap) = id(g_tap_seq);'
+            - lvgl.page.show: { id: page_scenes, animation: move_left, time: 250ms }
+            - script.execute: sc_render
 
-  # Knob-Drehung schaltet Szenen 1-9 durch (Startet den 2-Sekunden-Timer bei jeder Rastung neu)
+  # Knob-Drehung schaltet Szenen 1-9 durch
   - interval: 120ms
     then:
       - if:
           condition: { lambda: 'return id(g_base)==3 && id(g_knob_delta) != 0;' }
           then:
             - lambda: |-
-                id(g_scene_target) += id(g_knob_delta);
+                id(g_sc_target) += id(g_knob_delta);
                 id(g_knob_delta) = 0;
-                if (id(g_scene_target) < 1.0) id(g_scene_target) = 1.0;
-                if (id(g_scene_target) > 9.0) id(g_scene_target) = 9.0;
-            - script.execute: cw_commit_brightness
-            - script.execute: cw_render
+                if (id(g_sc_target) < 1.0) id(g_sc_target) = 1.0;
+                if (id(g_sc_target) > 9.0) id(g_sc_target) = 9.0;
+            - script.execute: sc_commit_delayed
+            - script.execute: sc_render
 
-      # Klick führt die Szene SOFORT aus (überspringt die 2 Sekunden Wartezeit)
+      # Klick führt die Szene SOFORT aus
       - if:
-          condition: { lambda: 'return id(g_base)==3 && id(g_tap_seq) != id(g_cw_lasttap);' }
+          condition: { lambda: 'return id(g_base)==3 && id(g_tap_seq) != id(g_sc_lasttap);' }
           then:
-            - lambda: 'id(g_cw_lasttap) = id(g_tap_seq);'
-            - script.execute: cw_commit_instant
+            - lambda: 'id(g_sc_lasttap) = id(g_tap_seq);'
+            - script.execute: sc_commit_instant
 
 lvgl:
   pages:
-    - id: page_colorwheel
+    - id: page_scenes
       bg_color: 0x0B1020
       widgets:
         - arc:
-            id: cw_bright_slider
+            id: sc_bright_slider
             align: CENTER
             width: 300
             height: 300
@@ -127,14 +127,14 @@ lvgl:
               arc_width: 12
         - label: { align: CENTER, y: -86, text: "SZENEN", text_font: font_artist, text_color: 0xEC4899 }
         - label: 
-            id: cw_icon_label
+            id: sc_icon_label
             align: CENTER
             y: -36
             text: ""
             text_font: icons34
             text_color: 0xFFFFFF
         - label: 
-            id: cw_bright_label
+            id: sc_bright_label
             align: CENTER
             y: 10
             text: "--"
