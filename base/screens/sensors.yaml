@@ -15,7 +15,7 @@ esphome:
     - priority: 655
       then:
         - lambda: |-
-            id(g_present)[8] = true;   // register the sensors screen
+            id(g_present)[6] = true;   // register the sensors screen
             // resolve icon names -> glyphs (same set as the control tiles); "" -> no icon
             auto ic = [](const std::string &s) -> std::string {
               if (s == "bulb" || s == "light") return "\U000f0335";
