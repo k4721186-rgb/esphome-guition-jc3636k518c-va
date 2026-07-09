@@ -1,4 +1,4 @@
-# Farbsteuerungs-Screen mit 9 vordefinierten Farbkacheln & Helligkeits-Drehrad
+# Farbsteuerungs-Screen - Umgebaut zum Szenen-Selector für das SmartKnob (2.0s Delay)
 globals:
   - id: g_cw_lasttap    
     type: int
@@ -10,11 +10,10 @@ globals:
     initial_value: '1.0'
 
 script:
-  # Triggert die ausgewählte Szene verzögert nach dem Drehen
-  - id: cw_commit_brightness
+  # 1. Triggert die Szene SOFORT (wird vom Klick-Event genutzt)
+  - id: cw_commit_instant
     mode: restart
     then:
-      - delay: 400ms
       - homeassistant.action:
           action: scene.turn_on
           data:
@@ -31,7 +30,14 @@ script:
               if (idx == 9) return std::string("scene.wohnung_tageslicht");
               return std::string("");
 
-  # HIER WAR DER FEHLER: Jetzt korrekt als zweites Skript eingerückt!
+  # 2. Triggert die Szene VERZÖGERT (Auf 2,0 Sekunden erhöht)
+  - id: cw_commit_brightness
+    mode: restart
+    then:
+      - delay: 2000ms
+      - script.execute: cw_commit_instant
+
+  # 3. Aktualisiert das Display (Labels, Icons, Bogen)
   - id: cw_render
     then:
       - lvgl.label.update:
@@ -67,6 +73,7 @@ script:
           value: !lambda 'return (int)(100L * (id(g_scene_target) - 1) / 8);'
 
 interval:
+  # Navigation fängt Platz 3 im Karussell ab
   - interval: 50ms
     then:
       - if:
@@ -76,6 +83,7 @@ interval:
             - lvgl.page.show: { id: page_colorwheel, animation: move_left, time: 250ms }
             - script.execute: cw_render
 
+  # Knob-Drehung schaltet Szenen 1-9 durch (Startet den 2-Sekunden-Timer bei jeder Rastung neu)
   - interval: 120ms
     then:
       - if:
@@ -89,11 +97,12 @@ interval:
             - script.execute: cw_commit_brightness
             - script.execute: cw_render
 
+      # Klick führt die Szene SOFORT aus (überspringt die 2 Sekunden Wartezeit)
       - if:
           condition: { lambda: 'return id(g_base)==3 && id(g_tap_seq) != id(g_cw_lasttap);' }
           then:
             - lambda: 'id(g_cw_lasttap) = id(g_tap_seq);'
-            - script.execute: cw_commit_brightness
+            - script.execute: cw_commit_instant
 
 lvgl:
   pages:
